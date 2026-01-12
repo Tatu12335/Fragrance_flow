@@ -1,4 +1,4 @@
-﻿//hours wasted 0.30mins
+﻿//hours wasted writing, debugging and learning sql : 0.30mins
 
 using Tuoksu_inventory.classes;
 
@@ -26,9 +26,36 @@ class Program
             else
             {
                 
-                ShowPrompt();
-                Console.Write(">");
                 
+                Console.Write(">");
+                if (input == null)
+                {
+                    input = Console.ReadLine().ToLower();
+                }
+                else
+                {
+                    input.ToLower();
+                    switch (input)
+                    {
+                        case "add":
+                            fragrance.AddFragrance();
+                            break;
+                        case "list":
+                            Console.WriteLine(" Listing all fragrances...");
+                            fragrance.TestConnection();
+                            break;
+                        case "remove":
+                            Console.WriteLine(" Removing a fragrance by ID...");
+                            // Implementation for removing a fragrance goes here
+                            break;
+                        case "help":
+                            ShowPrompt();
+                            break;
+                        default:
+                            Console.WriteLine(" Invalid command. Type 'help' to see available commands.");
+                            break;
+                    }
+                }
                 
             }
         }
@@ -41,12 +68,6 @@ class Program
 
         
     }
-    public void AddFragrance()
-    {
-        Console.WriteLine(" Adding a new fragrance...");
-        // Implementation for adding a fragrance goes here
-    }
-
     static void ShowPrompt()
     {
         Console.WriteLine(" Please enter a command to manage your fragrance inventory.");

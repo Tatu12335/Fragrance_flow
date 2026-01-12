@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,5 +17,44 @@ namespace Tuoksu_inventory.classes
         public string category;
         public string Mostcommonseason;
         public string occasion;
+
+        public static Task TestConnection()
+        {
+            // Implementation for testing database connection goes here
+            string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            if(string.IsNullOrEmpty(connectionString))
+            {
+                Console.WriteLine("Connection string is not set.");
+            }
+            else
+            {
+                Console.WriteLine("Connection string found.");
+            }
+
+            using(SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    connection.Open();
+                    Console.WriteLine("Database connection successful.");
+                }
+                catch (SqlException ex)
+                {
+                    Console.WriteLine("Database connection failed: " + ex.Message);
+                }
+            }
+
+            return Task.CompletedTask;
+
+
+
+        }
+
+        public static Task  AddFragrance()
+        {
+            Console.WriteLine(" Adding a new fragrance...");
+            // Implementation for adding a fragrance goes here
+            return Task.CompletedTask;
+        }
     }
 }
