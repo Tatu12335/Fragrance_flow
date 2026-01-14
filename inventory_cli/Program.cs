@@ -1,4 +1,4 @@
-﻿//hours wasted writing, debugging and learning sql : 0.30mins
+﻿//hours wasted writing, debugging and learning sql : 3hrs 0mins
 
 using Tuoksu_inventory.classes;
 
