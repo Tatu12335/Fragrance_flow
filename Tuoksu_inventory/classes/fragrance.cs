@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using Azure.Core;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,6 +43,10 @@ namespace Tuoksu_inventory.classes
                 {
                     Console.WriteLine("Database connection failed: " + ex.Message);
                 }
+                catch(Exception ex)
+                {
+                    Console.WriteLine("An error occurred: " + ex.Message);
+                }
             }
 
             return Task.CompletedTask;
@@ -54,7 +59,23 @@ namespace Tuoksu_inventory.classes
         {
             Console.WriteLine(" Adding a new fragrance...");
             // Implementation for adding a fragrance goes here
+            TestConnection();
             return Task.CompletedTask;
         }
+        public static Task RemoveFragrance() 
+        {
+            Console.WriteLine(" Removing a fragrance by ID...");
+            // Implementation for removing a fragrance goes here
+            TestConnection();
+
+            return Task.CompletedTask;
+        }
+        public static Task ListFragrances()
+        {
+             Console.WriteLine(" Listing all fragrances...");
+            // Implementation for listing fragrances goes here
+            return Task.CompletedTask;
+        }
+
     }
 }

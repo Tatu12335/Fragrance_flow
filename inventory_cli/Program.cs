@@ -9,22 +9,18 @@ class Program
         fragrance fragrance = new fragrance();
         Console.ForegroundColor = ConsoleColor.Magenta;
         Console.WriteLine("-------------------------");
-        Console.WriteLine("Write down your fragrances");
+        Console.WriteLine("Fragrance flow");
         Console.WriteLine("-------------------------");
+        ShowPrompt();
         Console.ResetColor();
-        string input = Console.ReadLine();
+        string input = Console.ReadLine().ToLower();
         try
         {
             
 
-            if (args.Length > 0)
-            {
-                input = args[0].ToLower();
-                ShowPrompt();
-                return;
-            }
-            else
-            {
+           
+            
+            
                 
                 
                 Console.Write(">");
@@ -55,7 +51,7 @@ class Program
                             Console.WriteLine(" Invalid command. Type 'help' to see available commands.");
                             break;
                     }
-                }
+                
                 
             }
         }
