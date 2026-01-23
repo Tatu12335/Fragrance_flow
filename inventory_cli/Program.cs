@@ -1,4 +1,4 @@
-﻿//hours wasted writing, debugging and learning sql : 3hrs 0mins
+﻿//hours wasted writing, debugging and learning sql : 4hrs 30mins
 
 using Tuoksu_inventory.classes;
 
@@ -9,9 +9,25 @@ class Program
         fragrance fragrance = new fragrance();
         Console.ForegroundColor = ConsoleColor.Magenta;
         Console.WriteLine("-------------------------");
-        Console.WriteLine("Fragrance flow");
+        Console.WriteLine(" Fragrance flow");
         Console.WriteLine("-------------------------");
-        ShowPrompt();
+        Console.WriteLine(" Sign in With a username");
+        Console.Write(">");
+        var username = Console.ReadLine();
+        if(string.IsNullOrEmpty(username))
+        {
+            Console.WriteLine(" Username cannot be empty. Exiting application.");
+            return;
+        }
+        else
+        {
+            
+        }
+
+
+
+
+            ShowPrompt();
         Console.ResetColor();
         string input = Console.ReadLine().ToLower();
         try
@@ -38,7 +54,7 @@ class Program
                             break;
                         case "list":
                             Console.WriteLine(" Listing all fragrances...");
-                            fragrance.TestConnection();
+                            fragrance.ListFragrances();
                             break;
                         case "remove":
                             Console.WriteLine(" Removing a fragrance by ID...");
