@@ -107,12 +107,27 @@ namespace Tuoksu_inventory.classes
             }
             Console.WriteLine("------------------------");
         }
-        public static async Task CheckPasswordAsync(string username)
+        public static async Task CheckIfUserExists(string username)
         {
-            Console.WriteLine(" Checking user...");
             await TestConnection();
 
 
+
+
+        }
+        public static async Task CreateUser(string username, string password)
+        {
+            await TestConnection();
+            PasswordHasher.HashPassword(password, out byte[] salt);
+            salt.ToString();
+
+
+        }
+
+        public static async Task CheckPasswordAsync(string password)
+        {
+    
+            await TestConnection();
             
             string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             connectionString = connectionString.Trim('"');
