@@ -77,6 +77,7 @@ class Program
             Console.WriteLine(" An error occurred: " + ex.Message);
             Console.ResetColor();
         }
+        Console.WriteLine("hello");
 
         
     }
