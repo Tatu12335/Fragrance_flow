@@ -1,13 +1,15 @@
 ﻿using Azure.Core;
+using Dapper;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlTypes;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Dapper;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 namespace Tuoksu_inventory.classes
 {
     public class fragrance
@@ -20,6 +22,7 @@ namespace Tuoksu_inventory.classes
         public string category { get; set; }
         public string Mostcommonseason { get; set; }
         public string occasion { get; set; }
+       
 
         public static async Task TestConnection()
         {
@@ -53,7 +56,7 @@ namespace Tuoksu_inventory.classes
                 }
                 catch(Exception ex)
                 {
-                    Console.WriteLine("An error occurred: " + ex.Message);
+                    Console.WriteLine("An error occurred: 2" + ex.Message);
                 }
             }
 
@@ -107,33 +110,47 @@ namespace Tuoksu_inventory.classes
             }
             Console.WriteLine("------------------------");
         }
-        public static async Task CheckIfUserExists(string username)
+        public static bool userExists = false;
+        public static async Task CheckIfUserExists(string username, SqlConnection sqlConnection)
         {
-            await TestConnection();
 
+            var sqlcon = sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            string sqlQuery = "use fragrances; SELECT * FROM users WHERE username = @username;";
 
+            try
+            {
+                await sqlConnection.OpenAsync();
 
+                users.Instance.username = username;
 
-        }
-        public static async Task CreateUser(string username, string password)
-        {
-            await TestConnection();
-            PasswordHasher.HashPassword(password, out byte[] salt);
-            salt.ToString();
+                var result = await sqlConnection.QueryAsync(
+                    @"use fragrances; SELECT * FROM dbo.users WHERE username = @username;", username);
+                
+                foreach (var user in result)
+                {
+                    Console.WriteLine(" User found: " + user.username);
+                    userExists = true;
 
+                }
+                //await sqlConnection.QueryAsync(sqlQuery, new { username });
 
-        }
-
-        public static async Task CheckPasswordAsync(string password)
-        {
-    
-            await TestConnection();
+            }
+            catch(Exception ex)
+            {
+                
+                Console.WriteLine(" An error occurred 1: " + ex.Message);
+                
+            }
             
+        }
+        public static SqlConnection CONNECTIONHELPER()
+        {
             string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             connectionString = connectionString.Trim('"');
             if (string.IsNullOrEmpty(connectionString))
             {
                 Console.WriteLine("Connection string is not set.");
+                return null;
             }
             else
             {
@@ -145,11 +162,11 @@ namespace Tuoksu_inventory.classes
                     {
                         try
                         {
-                            connection.Open();
+                            connection.OpenAsync();
                             Console.WriteLine("Database connection successful.");
-                            
+                            return connection;
 
-                            //SqlCommand command = new SqlCommand("use fragrances; SELECT * FROM collection", connection);
+
                         }
                         catch (SqlException ex)
                         {
@@ -161,11 +178,37 @@ namespace Tuoksu_inventory.classes
                         }
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Console.WriteLine(" An error occurred: " + ex.Message);
                 }
             }
+            return null;
+        }
+        public static async Task CreateUser(string username, string password)
+        {
+            
+            await CheckIfUserExists(username,CONNECTIONHELPER());
+            if(userExists)
+            {
+                Console.WriteLine(" User already exists. Aborting user creation.");
+                return;
+            }
+           // PasswordHasher.HashPassword(password, out byte[] salt);
+           
+            password = PasswordHasher.HashPassword(password, out byte[] salt);
+            users.Instance.username = username;
+            users.Instance.PasswordHash = password;
+            users.Instance.salt = Convert.ToHexString(salt);
+
+        }
+
+        public static async Task CheckPasswordAsync(string password)
+        {
+    
+            await TestConnection();
+            
+            
 
 
 

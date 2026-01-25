@@ -1,4 +1,4 @@
-﻿//hours wasted writing, debugging and learning sql : 4hrs 30mins
+﻿//hours wasted writing, debugging and learning sql : 6hrs 0mins
 
 using Tuoksu_inventory.classes;
 
@@ -68,6 +68,9 @@ class Program
                             Console.WriteLine(" enter username to create");
                             newusername = Console.ReadLine();
                             newusername = Convert.ToString(newusername);
+                            break;
+                        default:
+                            Console.WriteLine("Invalid command!");
                             break;
                     }   
                         
