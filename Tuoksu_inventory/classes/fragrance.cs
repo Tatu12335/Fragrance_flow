@@ -40,27 +40,9 @@ namespace Tuoksu_inventory.classes
                 
             }
 
-            using(SqlConnection connection = new SqlConnection(connectionString))
-            {
-                try
-                {
-                    connection.Open();
-                    Console.WriteLine("Database connection successful.");
-                    connection.Close(); 
+            CONNECTIONHELPER();
 
-                    //SqlCommand command = new SqlCommand("use fragrances; SELECT * FROM collection", connection);
-                }
-                catch (SqlException ex)
-                {
-                    Console.WriteLine("Database connection failed: " + ex.Message);
-                }
-                catch(Exception ex)
-                {
-                    Console.WriteLine("An error occurred: 2" + ex.Message);
-                }
-            }
 
-            
 
 
 
@@ -122,17 +104,15 @@ namespace Tuoksu_inventory.classes
                 await sqlConnection.OpenAsync();
 
                 users.Instance.username = username;
+                Console.WriteLine("HELLO");
+                var result = await sqlConnection.QueryAsync<users>(
+                    $"use fragrances; SELECT * FROM users ; ").ConfigureAwait(false);
+                Console.WriteLine("HELLO2");
 
-                var result = await sqlConnection.QueryAsync(
-                    @"use fragrances; SELECT * FROM dbo.users WHERE username = @username;", username);
-                
-                foreach (var user in result)
-                {
-                    Console.WriteLine(" User found: " + user.username);
-                    userExists = true;
-
-                }
+                Console.WriteLine(result.ToList<users>());
+               
                 //await sqlConnection.QueryAsync(sqlQuery, new { username });
+                sqlConnection.Close();
 
             }
             catch(Exception ex)
@@ -183,7 +163,7 @@ namespace Tuoksu_inventory.classes
                     Console.WriteLine(" An error occurred: " + ex.Message);
                 }
             }
-            return null;
+            return new SqlConnection(connectionString);
         }
         public static async Task CreateUser(string username, string password)
         {

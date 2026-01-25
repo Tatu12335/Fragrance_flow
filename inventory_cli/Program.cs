@@ -1,10 +1,11 @@
-﻿//hours wasted writing, debugging and learning sql : 6hrs 0mins
+﻿//hours wasted writing, debugging and learning sql : 6hrs 30mins
 
+using System.Threading.Tasks;
 using Tuoksu_inventory.classes;
 
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         fragrance fragrance = new fragrance();
         Console.ForegroundColor = ConsoleColor.Magenta;
@@ -79,7 +80,7 @@ class Program
                     var newpassword = Console.ReadLine();
                     newpassword = Convert.ToString(newpassword);
 
-                    fragrance.CreateUser(newusername, newpassword);
+                    await fragrance.CreateUser(newusername, newpassword);
                     break;
                 default:
                     Console.WriteLine(" Invalid command. Type 'help' to see available commands.");
