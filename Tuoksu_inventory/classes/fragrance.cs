@@ -97,7 +97,7 @@ namespace Tuoksu_inventory.classes
         {
 
             var sqlcon = sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "use fragrances; SELECT * FROM users WHERE username = @username;";
+            string sqlQuery = "use fragrances; SELECT * FROM users WHERE username = @Username;";
 
             try
             {
@@ -105,13 +105,23 @@ namespace Tuoksu_inventory.classes
 
                 users.Instance.username = username;
                 Console.WriteLine("HELLO");
-                var result = await sqlConnection.QueryAsync<users>(
-                    $"use fragrances; SELECT * FROM users ; ").ConfigureAwait(false);
-                Console.WriteLine("HELLO2");
-
-                Console.WriteLine(result.ToList<users>());
-               
-                //await sqlConnection.QueryAsync(sqlQuery, new { username });
+                
+                
+                var userList = (await sqlConnection.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
+                foreach (var user in userList)
+                {
+                    if (user.username == username)
+                    {
+                        Console.WriteLine(" User found in database.");
+                        userExists = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine(" User not found in database.");
+                        userExists = false;
+                    }
+                }
+                
                 sqlConnection.Close();
 
             }

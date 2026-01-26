@@ -15,16 +15,10 @@ class Program
         Console.WriteLine(" Sign in With a username");
         Console.Write(">");
         var username = Console.ReadLine();
-        if (string.IsNullOrEmpty(username))
-        {
-            Console.WriteLine(" Username cannot be empty. Exiting application.");
+        
 
-            return;
-        }
-        else
-        {
 
-        }
+        Console.WriteLine(" Enter your password"); 
 
         ShowPrompt();
         Console.ResetColor();
