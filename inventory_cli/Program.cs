@@ -1,4 +1,4 @@
-﻿//hours wasted writing, debugging and learning sql : 10hrs 0mins
+﻿//hours wasted writing, debugging and learning sql : 12hrs 0mins
 
 using System.Net.Http.Headers;
 using Tuoksu_inventory.classes;
