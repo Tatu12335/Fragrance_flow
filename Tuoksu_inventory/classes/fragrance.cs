@@ -1,15 +1,7 @@
-﻿using Azure.Core;
-using Dapper;
+﻿using Dapper;
 using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlTypes;
-using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 namespace Tuoksu_inventory.classes
 {
     public class fragrance
@@ -22,7 +14,7 @@ namespace Tuoksu_inventory.classes
         public string category { get; set; }
         public string Mostcommonseason { get; set; }
         public string occasion { get; set; }
-       
+
 
         public static async Task TestConnection()
         {
@@ -37,10 +29,10 @@ namespace Tuoksu_inventory.classes
             {
                 Console.WriteLine("Connection string found.");
                 connectionString = connectionString.Replace("\"", "").Trim();
-                
+
             }
 
-            CONNECTIONHELPER();
+            
 
 
 
@@ -48,27 +40,27 @@ namespace Tuoksu_inventory.classes
 
         }
 
-        public static async Task  AddFragrance()
+        public static async Task AddFragrance()
         {
             Console.WriteLine(" Adding a new fragrance...");
-            
-            await TestConnection();
-            
-        }
-        public static async Task RemoveFragrance() 
-        {
-            Console.WriteLine(" Removing a fragrance by ID...");
-            
+
             await TestConnection();
 
-            
+        }
+        public static async Task RemoveFragrance()
+        {
+            Console.WriteLine(" Removing a fragrance by ID...");
+
+            await TestConnection();
+
+
         }
         public static async Task ListFragrances()
         {
-             Console.WriteLine(" Listing all fragrances...");
-           
+            Console.WriteLine(" Listing all fragrances...");
+
             await TestConnection();
-            
+
         }
         public static void DebugConnectionString(string? input)
         {
@@ -77,14 +69,14 @@ namespace Tuoksu_inventory.classes
             Console.WriteLine("--- String Debug Map ---");
             Console.WriteLine($"Total Length: {input.Length}");
 
-            
+
             for (int i = 0; i < input.Length; i++)
             {
                 char c = input[i];
-                
+
                 string display = char.IsWhiteSpace(c) ? $"[{char.GetUnicodeCategory(c)}]" : c.ToString();
 
-                
+
                 if (i > 80 && i < 100)
                 {
                     Console.WriteLine($"Index {i}: {display}");
@@ -104,34 +96,30 @@ namespace Tuoksu_inventory.classes
                 await sqlConnection.OpenAsync();
 
                 users.Instance.username = username;
-                Console.WriteLine("HELLO");
-                
-                
+
                 var userList = (await sqlConnection.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
                 foreach (var user in userList)
                 {
                     if (user.username == username)
-                    {
-                        Console.WriteLine(" User found in database.");
+                    {                      
                         userExists = true;
                     }
                     else
-                    {
-                        Console.WriteLine(" User not found in database.");
+                    {                      
                         userExists = false;
                     }
                 }
-                
+
                 sqlConnection.Close();
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                
+
                 Console.WriteLine(" An error occurred 1: " + ex.Message);
-                
+
             }
-            
+
         }
         public static SqlConnection CONNECTIONHELPER()
         {
@@ -139,12 +127,11 @@ namespace Tuoksu_inventory.classes
             connectionString = connectionString.Trim('"');
             if (string.IsNullOrEmpty(connectionString))
             {
-                Console.WriteLine("Connection string is not set.");
                 return null;
             }
             else
             {
-                Console.WriteLine("Connection string found.");
+                
                 connectionString = connectionString.Replace("\"", "").Trim();
                 try
                 {
@@ -153,7 +140,6 @@ namespace Tuoksu_inventory.classes
                         try
                         {
                             connection.OpenAsync();
-                            Console.WriteLine("Database connection successful.");
                             return connection;
 
 
@@ -175,30 +161,115 @@ namespace Tuoksu_inventory.classes
             }
             return new SqlConnection(connectionString);
         }
-        public static async Task CreateUser(string username, string password)
+        public static async Task CreateUser(string username, string password,string email)
         {
-            
-            await CheckIfUserExists(username,CONNECTIONHELPER());
-            if(userExists)
+
+            await CheckIfUserExists(username, CONNECTIONHELPER());
+            if (userExists)
             {
                 Console.WriteLine(" User already exists. Aborting user creation.");
                 return;
             }
-           // PasswordHasher.HashPassword(password, out byte[] salt);
-           
-            password = PasswordHasher.HashPassword(password, out byte[] salt);
-            users.Instance.username = username;
-            users.Instance.PasswordHash = password;
-            users.Instance.salt = Convert.ToHexString(salt);
+            else
+            {
+                Console.WriteLine(" Creating new user...");
+                var sqlConnection = CONNECTIONHELPER();
+
+                var sqlcon = sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+
+                string sqlQuery = "INSERT INTO users (username, PasswordHash, salt, email) VALUES (@Username, @PasswordHash, @Salt, @Email);";
+
+                byte[] saltBytes;
+                string passwordHash = PasswordHasher.HashPassword(password, out saltBytes);
+                string saltHex = Convert.ToHexString(saltBytes);
+
+                users.Instance.email = email;
+
+
+                users.Instance.username = username;
+                users.Instance.PasswordHash = passwordHash;
+                users.Instance.salt = saltHex;
+
+
+
+                try
+                {
+                    var result = await sqlConnection.ExecuteAsync(sqlQuery, new
+                    {
+                      Email= email,
+                      Username =  username,
+                      PasswordHash = passwordHash,
+                      Salt = saltHex,
+                    });
+
+                    Console.WriteLine(" User created successfully.");
+                }
+                catch (SqlException ex) when (ex.Number == 2627 || ex.Number == 2601) // Unique constraint error number
+                {
+                    Console.WriteLine(" User already exists. Aborting user creation.");
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occurred while creating the user: " + ex.Message);
+                }
+            }   
 
         }
+        public static async Task VerifyEmail(string email, SqlConnection sql)
+        {
 
+            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            string sqlQuery = "SELECT * FROM users WHERE email = @Email;";
+            try
+            {
+                await sql.ExecuteAsync(sqlQuery, new { Email = email });
+               
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(" An error occurred 1: " + ex.Message);
+            }
+            finally
+            {
+                await sql.CloseAsync();
+
+            }
+        }
+        public static async Task<int> SetId(string username,SqlConnection sql)
+        {
+           string sqlQuery = "use fragrances ;select top 1 * from users order by id desc;";
+            try
+            {
+                await sql.OpenAsync();
+                var userList = (await sql.QueryAsync<users>(sqlQuery)).ToList();
+                foreach (var user in userList)
+                {
+                    if (user.username == username)
+                    {
+                        users.Instance.id = user.id ++;
+                        return users.Instance.id;
+                    }
+                }
+                sql.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(" An error occurred 1: " + ex.Message);
+            }
+            finally
+            {
+                await sql.CloseAsync();
+            }
+
+                return 0;
+        }
         public static async Task CheckPasswordAsync(string password)
         {
-    
-            await TestConnection();
-            
-            
+
+          
+
+
 
 
 
@@ -220,7 +291,7 @@ namespace Tuoksu_inventory.classes
                 iterations,
                 hashAlgorithm,
                 saltSize
-            );  
+            );
             return Convert.ToHexString(hash);
         }
         public static bool VerifyPassword(string password, string hash, byte[] salt)

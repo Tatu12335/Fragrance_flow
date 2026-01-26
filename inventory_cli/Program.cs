@@ -1,6 +1,5 @@
-﻿//hours wasted writing, debugging and learning sql : 6hrs 30mins
+﻿//hours wasted writing, debugging and learning sql : 8hrs 30mins
 
-using System.Threading.Tasks;
 using Tuoksu_inventory.classes;
 
 class Program
@@ -15,98 +14,100 @@ class Program
         Console.WriteLine(" Sign in With a username");
         Console.Write(">");
         var username = Console.ReadLine();
-        
 
-
-        Console.WriteLine(" Enter your password"); 
-
-        ShowPrompt();
-        Console.ResetColor();
-        string input = Console.ReadLine().ToLower();
-        try
-        {
-            Console.Write(">");
-            if (input == null)
-            {
-                input = Console.ReadLine().ToLower();
-            }
-            else
-            {
-                input.ToLower();
-            }
-            switch (input)
-            {
-                case "add":
-                    fragrance.AddFragrance();
-                    break;
-                case "list":
-                    Console.WriteLine(" Listing all fragrances...");
-                    fragrance.ListFragrances();
-                    break;
-                case "remove":
-                    Console.WriteLine(" Removing a fragrance by ID...");
-                    // Implementation for removing a fragrance goes here
-                    break;
-                case "help":
-                    ShowPrompt();
-                    break;
-                case "createuser":
-                    Console.WriteLine(" enter username to create");
-                    var newusername = Console.ReadLine();
-                    newusername = Convert.ToString(newusername);
-                    Console.WriteLine($"is this the username you want => {newusername}");
-                    switch (Console.ReadLine().ToLower())
-                    {
-                        case "yes":
-                            break;
-                        case "no":
-                            Console.WriteLine(" enter username to create");
-                            newusername = Console.ReadLine();
-                            newusername = Convert.ToString(newusername);
-                            break;
-                        default:
-                            Console.WriteLine("Invalid command!");
-                            break;
-                    }   
-                        
-                   Console.WriteLine(" enter password to create");
-
-                    var newpassword = Console.ReadLine();
-                    newpassword = Convert.ToString(newpassword);
-
-                    await fragrance.CreateUser(newusername, newpassword);
-                    break;
-                default:
-                    Console.WriteLine(" Invalid command. Type 'help' to see available commands.");
-                    break;
-            }
-            
-            
-                           
-        }
-
-
-
-
-        catch (Exception ex)
+        if (username == null)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(" An error occurred: " + ex.Message);
+            Console.WriteLine(" Username cannot be empty.");
             Console.ResetColor();
+            return;
         }
-    }      
+        else
+        {
+            using (var connection = fragrance.CONNECTIONHELPER())
+            {
+                await fragrance.CheckIfUserExists(username, connection);
+                if (!fragrance.userExists)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine(" User does not exist. Do you want to create one(Y/N)?");
+                    Console.ResetColor();
+                    Console.Write(">");
+                    switch (Console.ReadLine().ToLower())
+                    {
+                        case "n":
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine(" Exiting application.");
+                            Console.ResetColor();
+                            return;
+                        case "y":
+                            Console.WriteLine(" Please enter email for the new user");
+                            Console.Write(">");
+                            var email = Console.ReadLine();
+                            if (string.IsNullOrWhiteSpace(email))
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine(" Email cannot be empty.");
+                                Console.ResetColor();
+                                return;
+                            }
+                            else
+                            {
+                                fragrance.VerifyEmail(email, connection);
 
-        
-    
-    static void ShowPrompt()
-    {
-        Console.WriteLine(" Please enter a command to manage your fragrance inventory.");
-        Console.WriteLine(" Available commands:");
-        Console.WriteLine(" add - Add a new fragrance");
-        Console.WriteLine(" list - List all fragrances");
-        Console.WriteLine(" remove - Remove a fragrance by ID");
-        Console.WriteLine(" help - Show this prompt");
-        Console.WriteLine(" createuser");
+                            }
+                            Console.WriteLine(" Please enter a password for the new user:");
+                            Console.Write(">");
+                            var password = Console.ReadLine();
+
+
+                            if (string.IsNullOrWhiteSpace(password))
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine(" Password cannot be empty.");
+                                Console.ResetColor();
+                                return;
+                            }
+                            else
+                            {
+                                await fragrance.CreateUser(username, password,email);
+
+                                Console.ResetColor();
+                                return;
+                            }
+
+                        default:
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine(" Invalid option. Exiting application.");
+                            Console.ResetColor();
+                            return;
+
+
+
+                    }
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine(" User found. Please enter your password to continue.");
+                    Console.ResetColor();
+                }
+            }
+            Console.ForegroundColor = ConsoleColor.Magenta;
+        }
+
+
+
+        static void ShowPrompt()
+        {
+            Console.WriteLine(" Please enter a command to manage your fragrance inventory.");
+            Console.WriteLine(" Available commands:");
+            Console.WriteLine(" add - Add a new fragrance");
+            Console.WriteLine(" list - List all fragrances");
+            Console.WriteLine(" remove - Remove a fragrance by ID");
+            Console.WriteLine(" help - Show this prompt");
+            Console.WriteLine(" createuser");
+        }
+
     }
-
 }
