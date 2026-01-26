@@ -116,10 +116,10 @@ class Program
                         switch (command)
                         {
                             case "add":
-                                await fragrance.AddFragrance();
+                                await fragrance.AddFragrancesAsync(connection);
                                 break;
                             case "list":
-                                await fragrance.ListFragrances(connection);
+                                await fragrance.ListFragrancesForCurrentUser(connection,username);
                                 break;
                             case "remove":
                                 await fragrance.RemoveFragrance();
