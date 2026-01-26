@@ -1,19 +1,21 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 namespace Tuoksu_inventory.classes
 {
     public class fragrance
     {
-        public int id { get; set; }
+        public int Newid { get; set; }
+        public int userid { get; set; }
         public string name { get; set; }
         public string brand { get; set; }
         public string size { get; set; }
         public string notes { get; set; }
         public string category { get; set; }
-        public string Mostcommonseason { get; set; }
-        public string occasion { get; set; }
+        public string most_common_season { get; set; }
+        public string most_common_occaision { get; set; }
 
 
         public static async Task TestConnection()
@@ -39,12 +41,20 @@ namespace Tuoksu_inventory.classes
 
 
         }
-
+        public static async Task GetUserId(string username, SqlConnection sql)
+        { 
+            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            
+        }
+        public static async Task SetUserId(string username, SqlConnection sql)
+        { 
+        
+        }
         public static async Task AddFragrance()
         {
-            Console.WriteLine(" Adding a new fragrance...");
 
-            await TestConnection();
+            
+            
 
         }
         public static async Task RemoveFragrance()
@@ -55,11 +65,24 @@ namespace Tuoksu_inventory.classes
 
 
         }
-        public static async Task ListFragrances()
+        public static async Task ListFragrances(SqlConnection sql)
         {
-            Console.WriteLine(" Listing all fragrances...");
-
-            await TestConnection();
+            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            string sqlQuery = "use fragrances; SELECT * FROM collection;";
+            try
+            {
+                await sql.OpenAsync();
+                var fragranceList = (await sql.QueryAsync<fragrance>(sqlQuery)).ToList();
+                foreach (var fragrance in fragranceList)
+                {
+                    Console.WriteLine($"ID: {fragrance.Newid}, Name: {fragrance.name}, Brand: {fragrance.brand}, Size: {fragrance.size}, Notes: {fragrance.notes}, Category: {fragrance.category}, Most Common Season: {fragrance.most_common_season}, Occasion: {fragrance.most_common_occaision}");
+                }
+                sql.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(" An error occurred 1: " + ex.Message);
+            }
 
         }
         public static void DebugConnectionString(string? input)
@@ -85,6 +108,8 @@ namespace Tuoksu_inventory.classes
             Console.WriteLine("------------------------");
         }
         public static bool userExists = false;
+        public static bool emailExists = false;
+        public static bool passwordExists = false;
         public static async Task CheckIfUserExists(string username, SqlConnection sqlConnection)
         {
 
@@ -220,11 +245,25 @@ namespace Tuoksu_inventory.classes
         {
 
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "SELECT * FROM users WHERE email = @Email;";
+            string sqlQuery = "SELECT COUNT(1) FROM users WHERE email = @Email;";
             try
             {
-                await sql.ExecuteAsync(sqlQuery, new { Email = email });
-               
+                
+                int rowsaffected = await sql.ExecuteScalarAsync<int>(sqlQuery, new { Email = email });
+                if (rowsaffected <= 0 )
+                {
+                    
+                    emailExists = false;
+
+                }
+                else
+                {
+                    emailExists = true;
+                    Console.WriteLine(" Email is already in use. Please use a different email.");
+                    
+                }
+
+
             }
             catch (Exception ex)
             {
@@ -235,7 +274,9 @@ namespace Tuoksu_inventory.classes
                 await sql.CloseAsync();
 
             }
+            
         }
+        // This method is not in use currently, might be useful later.
         public static async Task<int> SetId(string username,SqlConnection sql)
         {
            string sqlQuery = "use fragrances ;select top 1 * from users order by id desc;";
@@ -264,17 +305,38 @@ namespace Tuoksu_inventory.classes
 
                 return 0;
         }
-        public static async Task CheckPasswordAsync(string password)
+        public static async Task VerifyPasswordForCurrentUserAsync(string password, string username, SqlConnection sql)
         {
-
-          
-
-
-
-
-
+            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            string sqlQuery = "use fragrances; SELECT * FROM users WHERE username = @Username;";
+            try
+            {
+                await sql.OpenAsync();
+                var userList = (await sql.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
+                foreach (var user in userList)
+                {
+                    if (user.username == username)
+                    {
+                        bool isPasswordValid = PasswordHasher.VerifyPassword(password, user.PasswordHash, Convert.FromHexString(user.salt));
+                        if (isPasswordValid)
+                        {
+                            Console.WriteLine(" Password is valid. User authenticated.");
+                            passwordExists = true;
+                        }
+                        else
+                        {
+                            Console.WriteLine(" Invalid password. Authentication failed.");
+                            passwordExists = false;
+                        }
+                    }
+                }
+                sql.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(" An error occurred 1: " + ex.Message);
+            }
         }
-
     }
     public static class PasswordHasher
     {
