@@ -10,3 +10,7 @@ so that when i make this repo public my sql passwords wont be stolen.
 ______________________________________________________________________________________________________________________
 I decided for now its best to use enviroment variables, maybe i will host this project on some other server and 
 then i can set up the variable on that server too. 
+_______________________________________________________________________________________________________________________
+There was a lot of new stuff to learn at this point i have sunk 14hrs to the project: I now have working user authetication,
+logic for adding fragrances, removing them and checking for users permission. I also started to implement some of my vision,
+For example : Fragrance suggestions based on the users general location which, i get from ip-api.com.
