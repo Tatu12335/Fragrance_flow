@@ -1,16 +1,43 @@
-____________________________________________________________________________________________________________________
-With this project i wanted to do something new, so i started thinking about my hobbies and what type of project could i make
-based on them, first i started thinking about the gym, but i just didnt figure out how to bring my vision to life yet.
-But then i started thinking about my fragrance collecting hobby, and i got the project idea, i will make a fragrance 
-inventory system.
-______________________________________________________________________________________________________________________
-I think i will need to learn so much new stuff for this project, i already have a little bit of experience in wpf
-and sql but not enought, so atleast i need to fully learn those. I will also try to make this as safe as possible,
-so that when i make this repo public my sql passwords wont be stolen.
-______________________________________________________________________________________________________________________
-I decided for now its best to use enviroment variables, maybe i will host this project on some other server and 
-then i can set up the variable on that server too. 
-_______________________________________________________________________________________________________________________
-There was a lot of new stuff to learn at this point i have sunk 14hrs to the project: I now have working user authetication,
-logic for adding fragrances, removing them and checking for users permission. I also started to implement some of my vision,
-For example : Fragrance suggestions based on the users general location which, i get from ip-api.com.
+🌊 Fragrance Flow
+Fragrance Flow is a specialized inventory management system designed for fragrance collectors. The project was born from a passion for scent collecting and a desire to bridge the gap between a physical hobby and modern software development.
+
+🚀 Key Features
+User Authentication: Secure login system with permission-based logic (Admin/User).
+
+Inventory Management: Full CRUD (Create, Read, Update, Delete) functionality for managing a fragrance collection.
+
+Smart Suggestions: A unique feature that suggests fragrances based on the user's local weather(!Work in progress).
+
+Tech Stack: Uses ip-api.com for geolocation and a weather API to determine the best scent for the current conditions (!Work in progress).
+
+Security First: Implementation of secure coding practices to protect user data and credentials.
+
+🛠️ Technical Deep Dive
+Security & Environment Management
+To ensure professional-level security, I implemented Environment Variables for handling sensitive data like SQL connection strings and API keys. This prevents accidental credential leaks when pushing code to public repositories.
+
+Database Integration
+The system utilizes MS SQL Server for robust data persistence. I've focused on learning deep SQL integration with C#, ensuring data integrity and efficient querying.
+
+Modern C# Architecture
+The project is built with a focus on clean code and modularity:
+
+WPF (Windows Presentation Foundation): For a rich desktop user experience (Upcoming).
+
+Asynchronous Programming: Utilizing async/await for non-blocking API calls and database operations.
+
+📈 Learning Journey
+This project represents a significant deep dive into full-stack development. Within the first 14 hours of development, I have successfully implemented:
+
+A functioning SQL-backed authentication system.
+
+API chaining (Geolocation -> Weather data).
+
+Dynamic suggestion logic.
+
+📍 Futere Plans
+ I plan to continue this project with new features and refactoring.
+
+
+ At 14 hours this code works but, it's messy and there alot of nested if-else statements.
+
