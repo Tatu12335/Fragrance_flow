@@ -1,4 +1,4 @@
-﻿//hours wasted writing, debugging and learning sql : 12hrs 30mins
+﻿//hours wasted writing, debugging and learning sql : 13hrs 30mins
 
 using Tuoksu_inventory.classes;
 
@@ -115,17 +115,49 @@ class Program
                         switch (command)
                         {
                             case "add":
-                                await fragrance.AddFragrancesAsync(connection);
+                                try
+                                {
+                                    await fragrance.AddFragrancesAsync(connection);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine($" Error adding fragrance: {ex.Message}");
+                                    Console.ResetColor();
+                                }
                                 break;
+                            
                             case "list":
-                                await fragrance.ListFragrancesForCurrentUser(connection, username);
+                                try
+                                {
+                                    await fragrance.ListFragrancesForCurrentUser(connection, username);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine($" Error listing fragrances: {ex.Message}");
+                                    Console.ResetColor();
+                                }
+
                                 break;
+                            
                             case "remove":
-                                await fragrance.RemoveFragrance();
-                                break;
+                                try
+                                {
+                                    await fragrance.RemoveFragranceAsync(connection, users.Instance.id,username);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine($" Error removing fragrance: {ex.Message}");
+                                    Console.ResetColor();
+                                }
+                                    break;
+                            
                             case "help":
                                 ShowPrompt();
                                 break;
+                            
                             default:
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 Console.WriteLine(" Invalid command. Type 'help' to see available commands.");
