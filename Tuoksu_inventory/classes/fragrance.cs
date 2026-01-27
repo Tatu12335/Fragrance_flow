@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
 using System.Net.Http.Json;
+using System.Globalization;
 namespace Tuoksu_inventory.classes
 {
     /*
@@ -13,6 +14,8 @@ namespace Tuoksu_inventory.classes
      */
     public class fragrance
     {
+        public static fragrance Instance { get; } = new fragrance();
+        public static HttpClient client = new HttpClient();// did not want to create multiple instances of HttpClient
         public int id { get; set; }
         //public int userid { get; set; }
         public string Name { get; set; }
@@ -481,22 +484,58 @@ namespace Tuoksu_inventory.classes
                 Console.WriteLine(" An error occurred 1: " + ex.Message);
             }
         }
-
+        
         // Method to fetch and display the user's IP location
         public static async Task UserLocation()
         {
-            using HttpClient client = new HttpClient();
+            
 
             try
             {
                 var location = await client.GetFromJsonAsync<IpLocation>("http://ip-api.com/json/");
+                
                 if (location != null && location.status == "success")
                 {
-                    Console.WriteLine($" Your IP location: {location.city}, {location.regionName}, {location.country}");
+                    
+                    //Console.WriteLine($" Your IP location: {location.city}, {location.regionName}, {location.country} {location.lat} {location.lon}");
+                   
+
+                    var weatherUrl = $" https://api.open-meteo.com/v1/forecast?latitude={location.lat.ToString(CultureInfo.InvariantCulture)}&longitude={location.lon.ToString(CultureInfo.InvariantCulture)}&current_weather=true&temperature_unit=celsius";
+                        
+                        var response = await client.GetAsync(weatherUrl);
+                    if (!response.IsSuccessStatusCode) return;
+
+                    var json = await response.Content.ReadAsStringAsync();
+
+                    using var document = System.Text.Json.JsonDocument.Parse(json);
+                    var currentWeather = document.RootElement
+                        .GetProperty("current_weather");
+                        
+                    var temperature = currentWeather
+                        .GetProperty("temperature").GetDouble();
+                   
+                   // Console.WriteLine($" Current temperature: {temperature}°C");
+                    
+                    if(temperature <= 10)
+                    {
+                        Console.WriteLine(" It's cold outside. You might want to wear warm and spicy fragrances.");
+                    }
+                    else if (temperature > 10 && temperature <= 20)
+                    {
+                        Console.WriteLine(" It's mild outside. You might want to wear fresh and floral fragrances.");
+                    }
+                    else
+                    {
+                        Console.WriteLine(" It's warm outside. You might want to wear light and citrusy fragrances.");
+                    }
+
+                    client.Dispose();
+
                 }
                 else
                 {
                     Console.WriteLine(" Unable to fetch IP location.");
+                    Console.WriteLine($" Status: {location.status}");
                 }
             }
             catch (Exception ex)
@@ -504,14 +543,15 @@ namespace Tuoksu_inventory.classes
                 Console.WriteLine(" An error occurred while fetching IP location: " + ex.Message);
             }
         }
-        public static async Task FragranceForWeather(SqlConnection sql,HttpClient client,int id)
+        // Method to suggest fragrances based on the weather
+        public static async Task FragranceForWeather(SqlConnection sql)
         {
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             
             
             try
             {
-                
+                await UserLocation();
             }
             catch (Exception ex)
             {
@@ -521,21 +561,23 @@ namespace Tuoksu_inventory.classes
         // Additional classes can be added here as needed
         public class IpLocation
         {
-            public string status { get; set; }
+           public static IpLocation Instance { get; } = new IpLocation();
+            public  string status { get; set; }
             public string country { get; set; }
-            public string countryCode { get; set; }
-            public string region { get; set; }
-            public string regionName { get; set; }
-            public string city { get; set; }
-            public string zip { get; set; }
-            public float lat { get; set; }
-            public float lon { get; set; }
-            public string timezone { get; set; }
-            public string isp { get; set; }
-            public string org { get; set; }
-            public string @as { get; set; }
-            public string query { get; set; }
+            public  string countryCode { get; set; }
+            public  string region { get; set; }
+            public  string regionName { get; set; }
+            public  string city { get; set; }
+            public  string zip { get; set; }
+            public  float lat { get; set; }
+            public  float lon { get; set; }
+            public  string timezone { get; set; }
+            public  string isp { get; set; }
+            public  string org { get; set; }
+            public  string @as { get; set; }
+            public  string query { get; set; }
         }
+
         public class Algorithms
         {
 
@@ -567,7 +609,7 @@ namespace Tuoksu_inventory.classes
                     iterations,
                     hashAlgorithm,
                     saltSize);
-
+                // Used fixed time comparison to prevent timing attacks
                 return CryptographicOperations.FixedTimeEquals(hashToCompare, Convert.FromHexString(hash));
             }
         }

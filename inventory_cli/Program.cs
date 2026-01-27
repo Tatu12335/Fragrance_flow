@@ -1,4 +1,4 @@
-﻿//hours wasted writing, debugging and learning sql : 14hrs 0mins
+﻿//hours wasted writing, debugging and learning sql : 15hrs 0mins
 
 using Microsoft.Identity.Client;
 using Tuoksu_inventory.classes;
@@ -111,7 +111,18 @@ class Program
                             case "help":
                                 ShowPrompt();
                                 break;
-                            
+                            case "suggest":
+                                try
+                                {
+                                    await fragrance.FragranceForWeather(connection, users.Instance.id);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine($" Error suggesting fragrance: {ex.Message}");
+                                    Console.ResetColor();
+                                }
+                                break;
                             default:
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 Console.WriteLine(" Invalid command. Type 'help' to see available commands.");
@@ -205,6 +216,7 @@ class Program
             Console.WriteLine(" add - Add a new fragrance");
             Console.WriteLine(" list - List all fragrances");
             Console.WriteLine(" remove - Remove a fragrance by ID");
+            Console.WriteLine(" suggest - Get fragrance suggestions based on the weather\n( NOTE : The program gets your location automatically if you use an vpn it wont work correctly)\n");
             Console.WriteLine(" help - Show this prompt");
             Console.WriteLine("");
 
