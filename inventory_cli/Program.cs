@@ -1,12 +1,14 @@
-﻿//hours wasted writing, debugging and learning sql : 13hrs 30mins
+﻿//hours wasted writing, debugging and learning sql : 14hrs 0mins
 
+using Microsoft.Identity.Client;
 using Tuoksu_inventory.classes;
 
 class Program
 {
+    public static fragrance fragrance = new fragrance();
     static async Task Main(string[] args)
     {
-        fragrance fragrance = new fragrance();
+        //fragrance fragrance = new fragrance();
         Console.ForegroundColor = ConsoleColor.Magenta;
         Console.WriteLine("-------------------------");
         Console.WriteLine(" Fragrance flow");
@@ -26,7 +28,7 @@ class Program
         {
             using (var connection = fragrance.CONNECTIONHELPER())
             {
-                // Sorry for the nested code, couldn't figure out a better way to do it quickly, might refactor later.
+                
                 await fragrance.CheckIfUserExists(username, connection);
                 if (!fragrance.userExists)
                 {
@@ -41,61 +43,14 @@ class Program
                             Console.WriteLine(" Exiting application.");
                             Console.ResetColor();
                             return;
-                        case "y":
-                            Console.WriteLine(" Please enter email for the new user");
-                            Console.Write(">");
-                            var email = Console.ReadLine();
-                            if (!string.IsNullOrWhiteSpace(email) && email.Contains('@'))
-                            {
-                                await fragrance.VerifyEmail(email, connection);
-                            }
-                            else
-                            {
-
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine(" Email cannot be empty.");
-                                Console.ResetColor();
-                                return;
-                            }
-
-                            if (fragrance.emailExists)
-                            {
-
-                                Environment.Exit(0);
-
-                            }
-                            else
-                            {
-                                await fragrance.VerifyEmail(email, connection);
-                                Console.WriteLine(" Please enter a password for the new user:");
-                                Console.Write(">");
-                                var password = Console.ReadLine();
-
-                                if (string.IsNullOrWhiteSpace(password))
-                                {
-                                    Console.ForegroundColor = ConsoleColor.Red;
-                                    Console.WriteLine(" Password cannot be empty.");
-                                    Console.ResetColor();
-                                    return;
-                                }
-                                else
-                                {
-
-                                    await fragrance.CreateUser(username, password, email);
-
-                                    Console.ResetColor();
-                                    return;
-                                }
-
-                            }
+                        case "y":                    
+                              await CreateUserAsync();
                             break;
                         default:
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine(" Invalid option. Exiting application.");
                             Console.ResetColor();
                             return;
-
-
 
                     }
                 }
@@ -138,9 +93,8 @@ class Program
                                     Console.WriteLine($" Error listing fragrances: {ex.Message}");
                                     Console.ResetColor();
                                 }
-
                                 break;
-                            
+                        
                             case "remove":
                                 try
                                 {
@@ -152,7 +106,7 @@ class Program
                                     Console.WriteLine($" Error removing fragrance: {ex.Message}");
                                     Console.ResetColor();
                                 }
-                                    break;
+                                break;
                             
                             case "help":
                                 ShowPrompt();
@@ -176,8 +130,72 @@ class Program
             }
             Console.ForegroundColor = ConsoleColor.Magenta;
         }
+        static async Task CreateUserAsync()
+        {
+            
+            using (var connection = fragrance.CONNECTIONHELPER())
+            {
+                Console.WriteLine(" Please enter a username for the new user:");
+                Console.Write(">");
+                var username = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(username))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(" Username cannot be empty.");
+                    Console.ResetColor();
+                    return;
+                }
+                 fragrance.CheckIfUserExists(username, connection).Wait();
 
 
+                if (fragrance.userExists)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(" Username already exists. Please choose a different username.");
+                    Console.ResetColor();
+                    return ;
+                }
+
+                Console.WriteLine(" Please enter email for the new user");
+                Console.Write(">");
+                var email = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+                {
+
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(" Email is invalid.");
+                    Console.ResetColor();
+                    return;
+                }
+                
+               fragrance.VerifyEmail(email, connection).Wait();
+                
+                if (fragrance.emailExists)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(" Email already exists. Please choose a different email.");
+                    Console.ResetColor();
+                    return ;
+                }
+
+                Console.WriteLine(" Please enter a password for the new user:");
+                Console.Write(">");
+                var password = Console.ReadLine();
+
+                if (string.IsNullOrWhiteSpace(password))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(" Password cannot be empty.");
+                    Console.ResetColor();
+                    return;
+                }
+               
+                    await fragrance.CreateUser(username, password, email);
+                    Console.ResetColor();
+                    
+                
+            }
+        }
 
         static void ShowPrompt()
         {

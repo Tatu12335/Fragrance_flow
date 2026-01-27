@@ -352,16 +352,21 @@ namespace Tuoksu_inventory.classes
                 var sqlcon = sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
 
                 string sqlQuery = "INSERT INTO users (username, PasswordHash, salt, email) VALUES (@Username, @PasswordHash, @Salt, @Email);";
-
+                
                 byte[] saltBytes;
+
+
+                
                 string passwordHash = PasswordHasher.HashPassword(password, out saltBytes);
+                
+               
                 string saltHex = Convert.ToHexString(saltBytes);
 
                 users.Instance.email = email;
                 users.Instance.username = username;
                 users.Instance.PasswordHash = passwordHash;
                 users.Instance.salt = saltHex;
-
+                
                 try
                 {
                     var result = await sqlConnection.ExecuteAsync(sqlQuery, new
