@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 namespace Tuoksu_inventory.classes
@@ -41,9 +40,9 @@ namespace Tuoksu_inventory.classes
             }
 
         }
-       
+
         public static async Task GetUserId(string username, SqlConnection sql)
-        { 
+        {
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             string sqlQuery = "use fragrances; select id from users where username = @Username;";
             string sqlQuery2 = "use fragrances; select userId from tuoksut where userId = @Id";
@@ -55,14 +54,14 @@ namespace Tuoksu_inventory.classes
                 var userList = (await sql.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
                 foreach (var user in userList)
                 {
-                    
+
                     users.Instance.id = user.id;
-  
-                        var realId = (await sql.QueryAsync<users>(sqlQuery2, new { Id = users.Instance.id })).ToList();
-                        realId.Equals(users.Instance.id);
+
+                    var realId = (await sql.QueryAsync<users>(sqlQuery2, new { Id = users.Instance.id })).ToList();
+                    realId.Equals(users.Instance.id);
 
                 }
-               
+
                 sql.Close();
             }
             catch (Exception ex)
@@ -76,21 +75,80 @@ namespace Tuoksu_inventory.classes
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
 
             string sqlQuery = "INSERT INTO tuoksut (userId, Name, Brand, notes, category, weather, occasion) VALUES (@UserId, @Name, @Brand, @notes, @category, @weather, @occasion);";
+            GetUserId(users.Instance.username, sql).Wait();
+            await sql.OpenAsync();
+
+            Console.WriteLine(" Whats the name of the fragrance");
+            Console.Write(">");
+            var name = Console.ReadLine();
             
-            sql.OpenAsync();
- 
-            
-            sql.ExecuteAsync(sqlQuery, new
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                Console.WriteLine(" Name cannot be empty. Aborting fragrance addition.");
+                return;
+            }
+
+            Console.WriteLine(" Whats the brand of the fragrance");
+            Console.Write(">");
+            var brand = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(brand)) 
+                {
+                Console.WriteLine(" Brand cannot be empty. Aborting fragrance addition.");
+                return;
+            }
+
+            Console.WriteLine(" List some notes (comma separated)");
+            Console.Write(">");
+            var notes = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(notes))
+            {
+                Console.WriteLine(" Notes cannot be empty. Aborting fragrance addition.");
+                return;
+            }
+
+            Console.WriteLine(" Whats the category (gourmand,fresh, etc.)");
+            Console.Write(">");
+            var category = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(category))
+            {
+                Console.WriteLine(" Category cannot be empty. Aborting fragrance addition.");
+                return;
+            }
+
+            Console.WriteLine(" Most common weather to wear it in (cold, warm, etc.)");
+            Console.Write(">");
+            var weather = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(weather))
+            {
+                Console.WriteLine(" Weather cannot be empty. Aborting fragrance addition.");
+                return;
+            }
+
+            Console.WriteLine(" Most common occasion to wear it in (casual, formal, etc.)");
+            Console.Write(">");
+            var occasion = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(occasion))
+            {
+                Console.WriteLine(" Occasion cannot be empty. Aborting fragrance addition.");
+                return;
+            }
+
+
+
+
+
+            await sql.ExecuteAsync(sqlQuery, new
             {
                 UserId = users.Instance.id,
-                Name = "Test Fragrance",
-                Brand = "Test Brand",
-                notes = "Citrus, Woody",
-                category = "Eau de Parfum",
-                weather = "Warm",
-                occasion = "Casual"
+                Name = name,
+                Brand = brand,
+                notes = notes,
+                category = category,
+                weather = weather,
+                occasion = occasion
             });
-
+            Console.WriteLine(" Fragrance added successfully.");
+            sql.Close();
         }
         public static async Task UpdateFragrance()
         {
@@ -104,16 +162,16 @@ namespace Tuoksu_inventory.classes
             await TestConnection();
 
         }
-        public static async Task ListFragrancesForCurrentUser(SqlConnection sql,string username)
+        public static async Task ListFragrancesForCurrentUser(SqlConnection sql, string username)
         {
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            await GetUserId(username, sql);  
-            
+            await GetUserId(username, sql);
+
             await sql.OpenAsync();
             string sqlQuery3 = "use fragrances; select * from tuoksut where userId = @Id";
 
             var frags = await sql.QueryAsync<fragrance>(sqlQuery3, new { Id = users.Instance.id });
-            
+
             foreach (var fragrance in frags)
             {
                 Console.WriteLine($" Fragrance ID: {fragrance.newId}, Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes}, Category: {fragrance.category}, Most Common weather: {fragrance.weather}, Occasion: {fragrance.occasion}");
@@ -159,11 +217,11 @@ namespace Tuoksu_inventory.classes
                 foreach (var user in userList)
                 {
                     if (user.username == username)
-                    {                      
+                    {
                         userExists = true;
                     }
                     else
-                    {                      
+                    {
                         userExists = false;
                     }
                 }
@@ -184,7 +242,7 @@ namespace Tuoksu_inventory.classes
             }
             else
             {
-                
+
                 connectionString = connectionString.Replace("\"", "").Trim();
                 try
                 {
@@ -212,7 +270,7 @@ namespace Tuoksu_inventory.classes
             }
             return new SqlConnection(connectionString);
         }
-        public static async Task CreateUser(string username, string password,string email)
+        public static async Task CreateUser(string username, string password, string email)
         {
             await CheckIfUserExists(username, CONNECTIONHELPER());
             if (userExists)
@@ -242,10 +300,10 @@ namespace Tuoksu_inventory.classes
                 {
                     var result = await sqlConnection.ExecuteAsync(sqlQuery, new
                     {
-                      Email= email,
-                      Username =  username,
-                      PasswordHash = passwordHash,
-                      Salt = saltHex,
+                        Email = email,
+                        Username = username,
+                        PasswordHash = passwordHash,
+                        Salt = saltHex,
                     });
 
                     Console.WriteLine(" User created successfully.");
@@ -259,7 +317,7 @@ namespace Tuoksu_inventory.classes
                 {
                     Console.WriteLine(" An error occurred while creating the user: " + ex.Message);
                 }
-            }   
+            }
 
         }
         public static async Task VerifyEmail(string email, SqlConnection sql)
@@ -267,16 +325,16 @@ namespace Tuoksu_inventory.classes
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             string sqlQuery = "SELECT COUNT(1) FROM users WHERE email = @Email;";
             try
-            { 
+            {
                 int rowsaffected = await sql.ExecuteScalarAsync<int>(sqlQuery, new { Email = email });
-                if (rowsaffected <= 0 )
-                {             
+                if (rowsaffected <= 0)
+                {
                     emailExists = false;
                 }
                 else
                 {
                     emailExists = true;
-                    Console.WriteLine(" Email is already in use. Please use a different email.");                 
+                    Console.WriteLine(" Email is already in use. Please use a different email.");
                 }
             }
             catch (Exception ex)
@@ -287,12 +345,12 @@ namespace Tuoksu_inventory.classes
             {
                 await sql.CloseAsync();
 
-            }  
+            }
         }
         // This method is not in use currently, might be useful later.
-        public static async Task<int> SetId(string username,SqlConnection sql)
+        public static async Task<int> SetId(string username, SqlConnection sql)
         {
-           string sqlQuery = "use fragrances ;select top 1 * from users order by id desc;";
+            string sqlQuery = "use fragrances ;select top 1 * from users order by id desc;";
             try
             {
                 await sql.OpenAsync();
@@ -301,7 +359,7 @@ namespace Tuoksu_inventory.classes
                 {
                     if (user.username == username)
                     {
-                        users.Instance.id = user.id ++;
+                        users.Instance.id = user.id++;
                         return users.Instance.id;
                     }
                 }

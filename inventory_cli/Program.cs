@@ -1,6 +1,5 @@
-﻿//hours wasted writing, debugging and learning sql : 12hrs 0mins
+﻿//hours wasted writing, debugging and learning sql : 12hrs 30mins
 
-using System.Net.Http.Headers;
 using Tuoksu_inventory.classes;
 
 class Program
@@ -52,7 +51,7 @@ class Program
                             }
                             else
                             {
-                                
+
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 Console.WriteLine(" Email cannot be empty.");
                                 Console.ResetColor();
@@ -63,9 +62,9 @@ class Program
                             {
 
                                 Environment.Exit(0);
-                                
+
                             }
-                            else 
+                            else
                             {
                                 await fragrance.VerifyEmail(email, connection);
                                 Console.WriteLine(" Please enter a password for the new user:");
@@ -87,7 +86,7 @@ class Program
                                     Console.ResetColor();
                                     return;
                                 }
-                                
+
                             }
                             break;
                         default:
@@ -107,7 +106,7 @@ class Program
                     var passwordAttempt = Console.ReadLine();
                     await fragrance.VerifyPasswordForCurrentUserAsync(passwordAttempt, username, connection);
                     Console.ForegroundColor = ConsoleColor.Green;
-                    if(fragrance.passwordExists)
+                    if (fragrance.passwordExists)
                     {
                         Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine($"------ WELCOME BACK [{username}] ------");
@@ -119,7 +118,7 @@ class Program
                                 await fragrance.AddFragrancesAsync(connection);
                                 break;
                             case "list":
-                                await fragrance.ListFragrancesForCurrentUser(connection,username);
+                                await fragrance.ListFragrancesForCurrentUser(connection, username);
                                 break;
                             case "remove":
                                 await fragrance.RemoveFragrance();
@@ -158,7 +157,7 @@ class Program
             Console.WriteLine(" remove - Remove a fragrance by ID");
             Console.WriteLine(" help - Show this prompt");
             Console.WriteLine("");
-            
+
         }
 
     }
