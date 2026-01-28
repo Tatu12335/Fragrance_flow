@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Net.Http.Json;
 using System.Globalization;
+using Microsoft.Identity.Client;
 namespace Tuoksu_inventory.classes
 {
     /*
@@ -11,11 +12,14 @@ namespace Tuoksu_inventory.classes
      Also implemented singleton pattern for user class to maintain current user state across the application.
      And my database design is very simple, just two tables, users and tuoksut (fragrances in Finnish).
      I joined them via userId foreign key in tuoksut table.
+     Not sure if this is the best practice but it works for this simple CLI application.
+     
      */
     public class fragrance
     {
         public static fragrance Instance { get; } = new fragrance();
-        public static HttpClient client = new HttpClient();// did not want to create multiple instances of HttpClient
+        // did not want to create multiple instances of HttpClient
+        private static readonly HttpClient client = new HttpClient();
         public int id { get; set; }
         //public int userid { get; set; }
         public string Name { get; set; }
@@ -49,9 +53,9 @@ namespace Tuoksu_inventory.classes
         public static async Task GetUserId(string username, SqlConnection sql)
         {
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "use fragrances; select id from users where username = @Username;";
-            string sqlQuery2 = "use fragrances; select userId from tuoksut where userId = @Id";
-            //string sqlQuery3 = "use fragrances; select * from tuoksut where userId = @Id";
+            string sqlQuery = "select id from users where username = @Username;";
+            string sqlQuery2 = "select userId from tuoksut where userId = @Id";
+            
 
             try
             {
@@ -81,7 +85,7 @@ namespace Tuoksu_inventory.classes
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
 
             string sqlQuery = "INSERT INTO tuoksut (userId, Name, Brand, notes, category, weather, occasion) VALUES (@UserId, @Name, @Brand, @notes, @category, @weather, @occasion);";
-            GetUserId(users.Instance.username, sql).Wait();
+            await GetUserId(users.Instance.username, sql);
             await sql.OpenAsync();
 
             Console.WriteLine(" Whats the name of the fragrance");
@@ -112,7 +116,7 @@ namespace Tuoksu_inventory.classes
                 return;
             }
 
-            Console.WriteLine(" Whats the category (gourmand,fresh, etc.)");
+            Console.WriteLine(" Whats the category (gourmand,fresh,amber,etc.)");
             Console.Write(">");
             var category = Console.ReadLine();
             if (string.IsNullOrWhiteSpace(category))
@@ -272,7 +276,7 @@ namespace Tuoksu_inventory.classes
         {
 
             var sqlcon = sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "use fragrances; SELECT * FROM users WHERE username = @Username;";
+            string sqlQuery = "SELECT * FROM users WHERE username = @Username;";
 
             try
             {
@@ -425,7 +429,7 @@ namespace Tuoksu_inventory.classes
         // This method is not in use currently, might be useful later.
         public static async Task<int> SetId(string username, SqlConnection sql)
         {
-            string sqlQuery = "use fragrances ;select top 1 * from users order by id desc;";
+            string sqlQuery = "select top 1 * from users order by id desc;";
             try
             {
                 await sql.OpenAsync();
@@ -455,7 +459,7 @@ namespace Tuoksu_inventory.classes
         public static async Task VerifyPasswordForCurrentUserAsync(string password, string username, SqlConnection sql)
         {
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "use fragrances; SELECT * FROM users WHERE username = @Username;";
+            string sqlQuery = "SELECT * FROM users WHERE username = @Username;";
             try
             {
                 await sql.OpenAsync();
@@ -495,10 +499,7 @@ namespace Tuoksu_inventory.classes
                 var location = await client.GetFromJsonAsync<IpLocation>("http://ip-api.com/json/");
                 
                 if (location != null && location.status == "success")
-                {
-                    
-                    //Console.WriteLine($" Your IP location: {location.city}, {location.regionName}, {location.country} {location.lat} {location.lon}");
-                   
+                {                        
 
                     var weatherUrl = $" https://api.open-meteo.com/v1/forecast?latitude={location.lat.ToString(CultureInfo.InvariantCulture)}&longitude={location.lon.ToString(CultureInfo.InvariantCulture)}&current_weather=true&temperature_unit=celsius";
                         
@@ -512,24 +513,7 @@ namespace Tuoksu_inventory.classes
                         .GetProperty("current_weather");
                         
                     var temperature = currentWeather
-                        .GetProperty("temperature").GetDouble();
-                   
-                   // Console.WriteLine($" Current temperature: {temperature}°C");
-                    
-                    if(temperature <= 10)
-                    {
-                        Console.WriteLine(" It's cold outside. You might want to wear warm and spicy fragrances.");
-                    }
-                    else if (temperature > 10 && temperature <= 20)
-                    {
-                        Console.WriteLine(" It's mild outside. You might want to wear fresh and floral fragrances.");
-                    }
-                    else
-                    {
-                        Console.WriteLine(" It's warm outside. You might want to wear light and citrusy fragrances.");
-                    }
-
-                    client.Dispose();
+                        .GetProperty("temperature").GetDouble();    
 
                 }
                 else
@@ -544,14 +528,51 @@ namespace Tuoksu_inventory.classes
             }
         }
         // Method to suggest fragrances based on the weather
-        public static async Task FragranceForWeather(SqlConnection sql)
+        public static async Task FragranceForWeather(SqlConnection sql,double temperature)
         {
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            
-            
+            await GetUserId(users.Instance.username, sql);
+
+            var sqlQuery = "select * from tuoksut where userId = @Id and (category = 'gourmand' OR category = 'amber');";
+
             try
             {
                 await UserLocation();
+                if (temperature <= 10)
+                {
+                    Console.WriteLine(" It's cold outside. You might want to wear warm and spicy fragrances. For example:\n");
+                    await sql.OpenAsync();
+                    var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                    foreach (var fragrance in frags)
+                    {
+                        Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                    }
+
+                }
+                else if (temperature > 10 && temperature <= 20)
+                {
+                    Console.WriteLine(" It's mild outside. You might want to wear fresh and floral fragrances. For example");
+                    sqlQuery = "select * from tuoksut where userId = @Id and (category = 'floral' or category = 'fresh');";
+
+                    await sql.OpenAsync();
+                    var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                    foreach (var fragrance in frags)
+                    {
+                        Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                    }
+                }
+                else
+                {
+                    sqlQuery = "select * from tuoksut where userId = @Id and (category = 'citrusy' or category = 'aquatic' or 'fresh');";
+                    Console.WriteLine(" It's warm outside. You might want to wear light and citrusy fragrances. For Example\n");
+
+                    await sql.OpenAsync();
+                    var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                    foreach (var fragrance in frags)
+                    {
+                        Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                    }
+                }
             }
             catch (Exception ex)
             {
