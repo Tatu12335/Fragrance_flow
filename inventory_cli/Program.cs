@@ -2,6 +2,7 @@
 
 using Microsoft.Identity.Client;
 using Tuoksu_inventory.classes;
+using System.Text;
 
 class Program
 {
@@ -209,14 +210,14 @@ class Program
         }
         static string ReadPassword()
         {
-            string password = "";
+            StringBuilder password = new StringBuilder();
             ConsoleKeyInfo keyInfo;
             do
             {
                 keyInfo = Console.ReadKey(true);
                 if (keyInfo.Key != ConsoleKey.Backspace && keyInfo.Key != ConsoleKey.Enter)
                 {
-                    password +=(keyInfo.KeyChar);
+                    password.Append(keyInfo.KeyChar);
                     Console.Write("*");
                 }
                 else if (keyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
