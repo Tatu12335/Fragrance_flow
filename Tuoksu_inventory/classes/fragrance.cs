@@ -29,7 +29,7 @@ namespace Tuoksu_inventory.classes
         public string category { get; set; }
         public string weather { get; set; }
         public string occasion { get; set; }
-
+        public static bool owned { get; set; }
         // note to self: implement async/await properly later.
 
         public static async Task TestConnection()
@@ -48,6 +48,63 @@ namespace Tuoksu_inventory.classes
 
             }
 
+        }
+        // Doesnt really work as intended yet.
+        public static async Task <fragrance>GetAllFragrances(SqlConnection sql)
+        {
+            await GetUserId(users.Instance.username, sql);
+            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            string sqlQuery = "select * from tuoksut where userId = @UserId;";
+
+            try
+            {                
+                await sql.OpenAsync();
+                var fragranceList = (await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id })).ToList();
+                foreach (var Fragrance in fragranceList)
+                {
+                   return Fragrance;
+                }
+                sql.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(" An error occurred 1: " + ex.Message);
+            }
+            return fragrance.Instance;
+        }
+        // Same as above, needs work.
+        public static async Task DoesUserHaveTheSameFragrance(string username,SqlConnection sql)
+        {
+            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            await GetUserId(username, sql);
+
+
+            string sqlQuery = "select * from tuoksut where userId = @Id;";
+
+            try
+            {
+                await sql.OpenAsync();
+                var name = await GetAllFragrances(sql);
+                var userList = (await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id })).ToList();
+                foreach (var user in userList)
+                {
+                    
+                    if (name.Equals(name))
+                    {
+                        Console.WriteLine(" User already has this fragrance in their inventory.");
+                        owned = true;
+                    }
+                    else
+                    {
+                       owned = false;
+                    }
+                }
+                sql.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(" An error occurred 1: " + ex.Message);
+            }
         }
         // Method to get user ID based on username
         public static async Task GetUserId(string username, SqlConnection sql)
@@ -82,11 +139,21 @@ namespace Tuoksu_inventory.classes
         // Method to add a new fragrance to the database
         public static async Task AddFragrancesAsync(SqlConnection sql)
         {
+            
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            
+            await GetUserId(users.Instance.username, sql);
+            //await DoesUserHaveTheSameFragrance(users.Instance.username, sql);
+
+            if(owned)
+            {
+                Console.WriteLine(" You already own this fragrance. Aborting addition.");
+                return;
+            }
 
             string sqlQuery = "INSERT INTO tuoksut (userId, Name, Brand, notes, category, weather, occasion) VALUES (@UserId, @Name, @Brand, @notes, @category, @weather, @occasion);";
-            await GetUserId(users.Instance.username, sql);
-            await sql.OpenAsync();
+            
+            
 
             Console.WriteLine(" Whats the name of the fragrance");
             Console.Write(">");
@@ -146,7 +213,7 @@ namespace Tuoksu_inventory.classes
 
 
 
-
+            await sql.OpenAsync();
             await sql.ExecuteAsync(sqlQuery, new
             {
                 UserId = users.Instance.id,
@@ -527,13 +594,13 @@ namespace Tuoksu_inventory.classes
                 Console.WriteLine(" An error occurred while fetching IP location: " + ex.Message);
             }
         }
-        // Method to suggest fragrances based on the weather
+        // Method to suggest fragrances based on the weather. Ps : I want to add logic that takes the occasion into account as well.
         public static async Task FragranceForWeather(SqlConnection sql,double temperature)
         {
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(users.Instance.username, sql);
 
-            var sqlQuery = "select * from tuoksut where userId = @Id and (category = 'gourmand' OR category = 'amber');";
+            var sqlQuery = "select * from tuoksut where userId = @Id and (category = 'gourmand' OR category = 'amber' or weather = 'cold' or weather = 'cold sunny' );";
 
             try
             {
@@ -579,6 +646,50 @@ namespace Tuoksu_inventory.classes
                 Console.WriteLine(" An error occurred while fetching fragrance for weather: " + ex.Message);
             }
         }
+        public static async Task SuggestFragranceForCasual(SqlConnection sql)
+        {
+            await UserLocation();
+            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            string sqlQuery = "select * from tuoksut where userId = @Id and (occasion = 'casual');";
+
+            await GetUserId(users.Instance.username, sql);
+            try
+            {
+                await sql.OpenAsync();
+                var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                foreach (var fragrance in frags)
+                {
+                    Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(" An error occurred while suggesting fragrance for casual occasion: " + ex.Message);
+            }
+        }
+        public static async Task SuggestFragranceForDates(SqlConnection sql)
+        {
+            await UserLocation(); // might be useful later
+
+            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            string sqlQuery = "select * from tuoksut where userId = @Id and (occasion = 'dates' or occasion = 'date');";
+
+            await GetUserId(users.Instance.username, sql);
+            
+            try
+            {
+                await sql.OpenAsync();
+                var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                foreach (var fragrance in frags)
+                {
+                    Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(" An error occurred while suggesting fragrance for dates: " + ex.Message);
+            }
+        }
         // Additional classes can be added here as needed
         public class IpLocation
         {
@@ -597,11 +708,6 @@ namespace Tuoksu_inventory.classes
             public  string org { get; set; }
             public  string @as { get; set; }
             public  string query { get; set; }
-        }
-
-        public class Algorithms
-        {
-
         }
         // Static class for password hashing and verification
         public static class PasswordHasher

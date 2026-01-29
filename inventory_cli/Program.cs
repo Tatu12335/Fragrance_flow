@@ -64,6 +64,7 @@ class Program
                     Console.ForegroundColor = ConsoleColor.Green;
                     if (fragrance.passwordExists)
                     {
+                        Console.Clear();
                         Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine($"------ WELCOME BACK [{username}] ------");
                         ShowPrompt();
