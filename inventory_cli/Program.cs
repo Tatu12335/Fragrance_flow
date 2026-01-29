@@ -57,9 +57,9 @@ class Program
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine(" User found. Please enter your password to continue.");
-                    var passwordAttempt = Console.ReadLine();
-                    await fragrance.VerifyPasswordForCurrentUserAsync(passwordAttempt, username, connection);
+                    Console.WriteLine(" User found. Please enter your password to continue.");            
+                    
+                    await fragrance.VerifyPasswordForCurrentUserAsync(ReadPassword(), username, connection);
                     Console.ForegroundColor = ConsoleColor.Green;
                     if (fragrance.passwordExists)
                     {
@@ -191,7 +191,7 @@ class Program
 
                 Console.WriteLine(" Please enter a password for the new user:");
                 Console.Write(">");
-                var password = Console.ReadLine();
+                var password = ReadPassword();
 
                 if (string.IsNullOrWhiteSpace(password))
                 {
@@ -207,7 +207,28 @@ class Program
                 
             }
         }
-
+        static string ReadPassword()
+        {
+            string password = "";
+            ConsoleKeyInfo keyInfo;
+            do
+            {
+                keyInfo = Console.ReadKey(true);
+                if (keyInfo.Key != ConsoleKey.Backspace && keyInfo.Key != ConsoleKey.Enter)
+                {
+                    password +=(keyInfo.KeyChar);
+                    Console.Write("*");
+                }
+                else if (keyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
+                {
+                    password.Remove(password.Length - 1, 1);
+                    Console.Write("\b \b");
+                    
+                }
+            } while (keyInfo.Key != ConsoleKey.Enter);
+            Console.WriteLine();
+            return password.ToString();
+        }
         static void ShowPrompt()
         {
             Console.WriteLine("");

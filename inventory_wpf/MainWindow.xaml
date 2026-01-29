@@ -19,5 +19,6 @@
                 FontSize="16"
                 Cursor="Hand"
                 Margin="10,300,10,10"/>
+        <StackPanel Margin="-10,-10,10,10"/>
     </Grid>
 </Window>
