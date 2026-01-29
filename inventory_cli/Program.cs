@@ -1,4 +1,4 @@
-﻿//hours wasted writing, debugging and learning sql,wpf etc : 16hrs 40mins
+﻿//hours wasted writing, debugging and learning sql,wpf etc : 18hrs 0mins
 
 using Microsoft.Identity.Client;
 using Tuoksu_inventory.classes;
