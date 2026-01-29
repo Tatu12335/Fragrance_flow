@@ -1,4 +1,5 @@
 🌊 Fragrance Flow
+
 Fragrance Flow is a specialized inventory management system designed for fragrance collectors. The project was born from a passion for scent collecting and a desire to bridge the gap between a physical hobby and modern software development.
 
 🚀 Key Features
