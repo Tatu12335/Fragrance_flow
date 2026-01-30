@@ -30,11 +30,12 @@ namespace Tuoksu_inventory.classes
         public string weather { get; set; }
         public string occasion { get; set; }
         public static bool owned { get; set; }
+       
         // note to self: implement async/await properly later.
 
         public static async Task TestConnection()
         {
-            // Implementation for testing database connection goes here
+            
             string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             connectionString = connectionString.Trim('"');
             if (string.IsNullOrEmpty(connectionString))
@@ -68,7 +69,7 @@ namespace Tuoksu_inventory.classes
             }
             catch (Exception ex)
             {
-                Console.WriteLine(" An error occurred 1: " + ex.Message);
+                Console.WriteLine(" An error occurred : " + ex.Message);
             }
             return fragrance.Instance;
         }
@@ -103,7 +104,7 @@ namespace Tuoksu_inventory.classes
             }
             catch (Exception ex)
             {
-                Console.WriteLine(" An error occurred 1: " + ex.Message);
+                Console.WriteLine(" An error occurred : " + ex.Message);
             }
         }
         // Method to get user ID based on username
@@ -132,7 +133,7 @@ namespace Tuoksu_inventory.classes
             }
             catch (Exception ex)
             {
-                Console.WriteLine(" An error occurred 1: " + ex.Message);
+                Console.WriteLine(" An error occurred : " + ex.Message);
             }
 
         }
@@ -485,7 +486,7 @@ namespace Tuoksu_inventory.classes
             }
             catch (Exception ex)
             {
-                Console.WriteLine(" An error occurred 1: " + ex.Message);
+                Console.WriteLine(" An error occurred : " + ex.Message);
             }
             finally
             {
@@ -513,7 +514,7 @@ namespace Tuoksu_inventory.classes
             }
             catch (Exception ex)
             {
-                Console.WriteLine(" An error occurred 1: " + ex.Message);
+                Console.WriteLine(" An error occurred : " + ex.Message);
             }
             finally
             {
@@ -552,7 +553,7 @@ namespace Tuoksu_inventory.classes
             }
             catch (Exception ex)
             {
-                Console.WriteLine(" An error occurred 1: " + ex.Message);
+                Console.WriteLine(" An error occurred : " + ex.Message);
             }
         }
         
@@ -688,6 +689,32 @@ namespace Tuoksu_inventory.classes
             catch (Exception ex)
             {
                 Console.WriteLine(" An error occurred while suggesting fragrance for dates: " + ex.Message);
+            }
+        }
+        public static async Task IfAdmin(SqlConnection sql,string username)
+        {
+            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            string sqlQuery = "select isAdmin from users where username = @Username;";
+            try
+            {
+                await sql.OpenAsync();
+                var userList = (await sql.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
+                foreach (var user in userList)
+                {
+                    if (username == "Admin")
+                    {
+                        users.Instance.isAdmin = true;
+                    }
+                    else
+                    {
+                        users.Instance.isAdmin = false;
+                    }
+                }
+                sql.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(" An error occurred : " + ex.Message);
             }
         }
         // Additional classes can be added here as needed
