@@ -1,4 +1,4 @@
-﻿//hours wasted writing, debugging and learning sql,wpf etc : 19hrs 0mins
+﻿//hours wasted writing, debugging and learning sql,wpf etc : 20hrs 0mins
 
 using Microsoft.Data.SqlClient;
 using Microsoft.Identity.Client;
@@ -66,7 +66,7 @@ class Program
                     
 
                     await fragrance.VerifyPasswordForCurrentUserAsync(ReadPassword(), username, connection);
-                    //await fragrance.IsAdmin(connection,username);
+                    
 
                     if(users.Instance.isAdmin == 1)
                     {

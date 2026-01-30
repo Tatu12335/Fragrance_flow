@@ -7,6 +7,7 @@ using System.Net.Http.Json;
 using System.Globalization;
 using Microsoft.Identity.Client;
 using System.Threading.Tasks;
+using System.Xml;
 namespace Tuoksu_inventory.classes
 {
     /*
@@ -56,58 +57,64 @@ namespace Tuoksu_inventory.classes
         // Doesnt really work as intended yet. Well now it does :)
         public static async Task<List<fragrance>>GetAllFragrances(SqlConnection sql)
         {
-            await GetUserId(users.Instance.username, sql);
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            await GetUserId(users.Instance.username, sql);
             string sqlQuery = "select * from tuoksut where userId = @UserId;";
 
             try
             {                
                 await sql.OpenAsync();
                 var fragranceList = (await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id })).ToList();
-                
-                
-                   return fragranceList;
-                
+
                 sql.Close();
+                return fragranceList;
+                
+                
             }
             catch (Exception ex)
             {
-                Console.WriteLine(" An error occurred : " + ex.Message);
+                Console.WriteLine(" An error occurred 1 : " + ex.Message);
             }
             return null;
         }
-        // Same as above, needs work.
+        // Needs work.
         public static async Task DoesUserHaveTheSameFragrance(string username,SqlConnection sql)
         {
+            
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(username, sql);
 
-
             string sqlQuery = "select * from tuoksut where userId = @Id;";
-
+            var name = await GetAllFragrances(sql);
+            
             try
             {
+
                 await sql.OpenAsync();
-                var name = await GetAllFragrances(sql);
                 var userList = (await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id })).ToList();
-                foreach (var user in userList)
+                foreach (var frag in userList)
                 {
                     
-                    if (name.Equals(name))
+                    if (name.Contains(frag))
                     {
                         Console.WriteLine(" User already has this fragrance in their inventory.");
                         owned = true;
+                        return;
                     }
                     else
                     {
                        owned = false;
                     }
                 }
-                sql.Close();
+                
             }
             catch (Exception ex)
             {
-                Console.WriteLine(" An error occurred : " + ex.Message);
+                Console.WriteLine(" An error occurred 2 : " + ex.Message);
+            }
+            finally
+            {
+                await sql.CloseAsync();
             }
         }
         // Method to get user ID based on username
@@ -117,7 +124,6 @@ namespace Tuoksu_inventory.classes
             string sqlQuery = "select id from users where username = @Username;";
             string sqlQuery2 = "select userId from tuoksut where userId = @Id";
             
-
             try
             {
                 await sql.OpenAsync();
@@ -131,30 +137,25 @@ namespace Tuoksu_inventory.classes
                     realId.Equals(users.Instance.id);
 
                 }
-
-                sql.Close();
+                await sql.CloseAsync();
             }
             catch (Exception ex)
             {
-                Console.WriteLine(" An error occurred : " + ex.Message);
+                Console.WriteLine(" An error occurred 3 : " + ex.Message);
             }
 
         }
         // Method to add a new fragrance to the database
-        // TO-DO : Validate user input in depth
+        // TO-DO : Validate user input in depth. Done a lil bit, i replaced whitespaces with a '_'.
         public static async Task AddFragrancesAsync(SqlConnection sql)
         {
             
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             
             await GetUserId(users.Instance.username, sql);
-            //await DoesUserHaveTheSameFragrance(users.Instance.username, sql);
+            
 
-            if(owned)
-            {
-                Console.WriteLine(" You already own this fragrance. Aborting addition.");
-                return;
-            }
+            
 
             string sqlQuery = "INSERT INTO tuoksut (userId, Name, Brand, notes, category, weather, occasion) VALUES (@UserId, @Name, @Brand, @notes, @category, @weather, @occasion);";
             
@@ -162,17 +163,18 @@ namespace Tuoksu_inventory.classes
 
             Console.WriteLine(" Whats the name of the fragrance");
             Console.Write(">");
-            var name = Console.ReadLine();
-
+            var name = Console.ReadLine().ToLower().Replace(" ","_");
             if (string.IsNullOrWhiteSpace(name))
             {
                 Console.WriteLine(" Name cannot be empty. Aborting fragrance addition.");
                 return;
             }
-
+            
+            await DoesUserHaveTheSameFragrance(users.Instance.username, sql);
+            
             Console.WriteLine(" Whats the brand of the fragrance");
             Console.Write(">");
-            var brand = Console.ReadLine();
+            var brand = Console.ReadLine().ToLower().Replace(" ", "_");
             if (string.IsNullOrWhiteSpace(brand))
             {
                 Console.WriteLine(" Brand cannot be empty. Aborting fragrance addition.");
@@ -181,7 +183,7 @@ namespace Tuoksu_inventory.classes
 
             Console.WriteLine(" List some notes (comma separated)");
             Console.Write(">");
-            var notes = Console.ReadLine();
+            var notes = Console.ReadLine().ToLower().Replace(" ", "_");
             if (string.IsNullOrWhiteSpace(notes))
             {
                 Console.WriteLine(" Notes cannot be empty. Aborting fragrance addition.");
@@ -190,7 +192,7 @@ namespace Tuoksu_inventory.classes
 
             Console.WriteLine(" Whats the category (gourmand,fresh,amber,etc.)");
             Console.Write(">");
-            var category = Console.ReadLine();
+            var category = Console.ReadLine().Replace(" ", "_");
             if (string.IsNullOrWhiteSpace(category))
             {
                 Console.WriteLine(" Category cannot be empty. Aborting fragrance addition.");
@@ -199,7 +201,7 @@ namespace Tuoksu_inventory.classes
 
             Console.WriteLine(" Most common weather to wear it in (cold, warm, etc.)");
             Console.Write(">");
-            var weather = Console.ReadLine();
+            var weather = Console.ReadLine().ToLower().Replace(" ", "_");
             if (string.IsNullOrWhiteSpace(weather))
             {
                 Console.WriteLine(" Weather cannot be empty. Aborting fragrance addition.");
@@ -208,7 +210,7 @@ namespace Tuoksu_inventory.classes
 
             Console.WriteLine(" Most common occasion to wear it in (casual, formal, etc.)");
             Console.Write(">");
-            var occasion = Console.ReadLine();
+            var occasion = Console.ReadLine().ToLower().Replace(" ", "_");
             if (string.IsNullOrWhiteSpace(occasion))
             {
                 Console.WriteLine(" Occasion cannot be empty. Aborting fragrance addition.");
@@ -230,7 +232,7 @@ namespace Tuoksu_inventory.classes
                 occasion = occasion
             });
             Console.WriteLine(" Fragrance added successfully.");
-            sql.Close();
+            await sql.CloseAsync();
         }
         public static async Task UpdateFragrance()
         {
@@ -240,9 +242,10 @@ namespace Tuoksu_inventory.classes
         // remove fragrance by id, only if it belongs to the current user
         public static async Task RemoveFragranceAsync(SqlConnection sql, int id, string username)
         {
+            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(username, sql);
 
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            
 
             Console.WriteLine(" Enter the id of the fragrance you want removed");
             Console.Write(">");
@@ -290,20 +293,13 @@ namespace Tuoksu_inventory.classes
         // List all fragrances for the current user
         public static async Task ListFragrancesForCurrentUser(SqlConnection sql, string username)
         {
-
+            
+            string sqlQuery3 = "use fragrances; select * from tuoksut where userId = @Id";
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(username, sql);
             try
             {
                 await sql.OpenAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occurred while opening the connection: " + ex.Message);
-            }
-            string sqlQuery3 = "use fragrances; select * from tuoksut where userId = @Id";
-            try
-            {
                 var frags = await sql.QueryAsync<fragrance>(sqlQuery3, new { Id = users.Instance.id });
                 foreach (var fragrance in frags)
                 {
@@ -312,8 +308,10 @@ namespace Tuoksu_inventory.classes
             }
             catch (Exception ex)
             {
-                Console.WriteLine(" An error occurred while listing fragrances: " + ex.Message);
+                Console.WriteLine(" An error occured while listing fragrances: " + ex.Message);
             }
+            await sql.CloseAsync();
+   
 
 
         }
@@ -352,7 +350,7 @@ namespace Tuoksu_inventory.classes
 
             try
             {
-                await sqlConnection.OpenAsync();
+                //await sqlConnection.OpenAsync();
 
                 users.Instance.username = username;
 
@@ -368,7 +366,7 @@ namespace Tuoksu_inventory.classes
                         userExists = false;
                     }
                 }
-                sqlConnection.Close();
+               await sqlConnection.CloseAsync();
             }
             catch (Exception ex)
             {
@@ -394,7 +392,7 @@ namespace Tuoksu_inventory.classes
                     {
                         try
                         {
-                            connection.OpenAsync();
+                            connection.Open();
                             return connection;
                         }
                         catch (SqlException ex)
@@ -418,6 +416,9 @@ namespace Tuoksu_inventory.classes
         // Method to create a new user in the database
         public static async Task CreateUser(string username, string password, string email)
         {
+            var sqlConnection = CONNECTIONHELPER();
+            var sqlcon = sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+
             await CheckIfUserExists(username,  CONNECTIONHELPER());
             if (userExists)
             {
@@ -427,9 +428,6 @@ namespace Tuoksu_inventory.classes
             else
             {
                 Console.WriteLine(" Creating new user...");
-                var sqlConnection =  CONNECTIONHELPER();
-
-                var sqlcon = sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
 
                 string sqlQuery = "INSERT INTO users (username, PasswordHash, salt, email) VALUES (@Username, @PasswordHash, @Salt, @Email);";
                 
@@ -560,6 +558,7 @@ namespace Tuoksu_inventory.classes
             {
                 Console.WriteLine(" An error occurred : " + ex.Message);
             }
+           await sql.CloseAsync();
         }
         
         // Method to fetch and display the user's IP location
@@ -698,35 +697,7 @@ namespace Tuoksu_inventory.classes
             }
         }
         // Work in progress
-        public static async Task IsAdmin(SqlConnection sql,string username)
-        {
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "select isAdmin from users where username = @Username;";
-            try
-            {
-                await sql.OpenAsync();
-                var userList = (await sql.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
-                foreach (var user in userList)
-                {
-                    if(user.isAdmin == 1)
-                    {
-                        
-                        Console.WriteLine(" User is an admin.");
-                    }
-                    else
-                    {
-                        
-                        Console.WriteLine(" User is not an admin.");
-                    }
-                    users.Instance.isAdmin = user.isAdmin;
-                }
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(" An error occurred while checking admin status: " + ex.Message);
-            }
-
-        }
+       
         // Additional classes can be added here as needed
         public class IpLocation
         {
