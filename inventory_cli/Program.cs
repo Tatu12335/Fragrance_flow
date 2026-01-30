@@ -1,4 +1,4 @@
-﻿//hours wasted writing, debugging and learning sql,wpf etc : 20hrs 0mins
+﻿//hours wasted writing, debugging and learning sql,wpf etc : 21hrs 40mins
 
 using Microsoft.Data.SqlClient;
 using Microsoft.Identity.Client;

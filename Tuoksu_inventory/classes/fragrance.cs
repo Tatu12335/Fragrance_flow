@@ -16,7 +16,7 @@ namespace Tuoksu_inventory.classes
      And my database design is very simple, just two tables, users and tuoksut (fragrances in Finnish).
      I joined them via userId foreign key in tuoksut table.
      Not sure if this is the best practice but it works for this simple CLI application.
-     
+     You might be asking why do i set the connection string so many times well, its because the whole code seems to break when i remove it so imma just keep it.
      */
     public class fragrance
     {
@@ -39,25 +39,12 @@ namespace Tuoksu_inventory.classes
 
         public static async Task TestConnection()
         {
-            
-            string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            connectionString = connectionString.Trim('"');
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                Console.WriteLine("Connection string is not set.");
-            }
-            else
-            {
-                Console.WriteLine("Connection string found.");
-                connectionString = connectionString.Replace("\"", "").Trim();
-
-            }
 
         }
         // Doesnt really work as intended yet. Well now it does :)
         public static async Task<List<fragrance>>GetAllFragrances(SqlConnection sql)
         {
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(users.Instance.username, sql);
             string sqlQuery = "select * from tuoksut where userId = @UserId;";
 
@@ -80,8 +67,7 @@ namespace Tuoksu_inventory.classes
         // Needs work.
         public static async Task DoesUserHaveTheSameFragrance(string username,SqlConnection sql,string frag)
         {
-            
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(username, sql);
             string sqlQuery2 = "select Count(1) from tuoksut where userId = @Id and Name like @Name;";
             //string sqlQuery = "select * from tuoksut where userId = @Id;";
@@ -114,9 +100,8 @@ namespace Tuoksu_inventory.classes
         // Method to get user ID based on username
         public static async Task GetUserId(string username, SqlConnection sql)
         {
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             string sqlQuery = "select id from users where username = @Username;";
-            string sqlQuery2 = "select userId from tuoksut where userId = @Id";
             
             try
             {
@@ -124,11 +109,7 @@ namespace Tuoksu_inventory.classes
                 var userList = (await sql.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
                 foreach (var user in userList)
                 {
-
                     users.Instance.id = user.id;
-
-                    var realId = (await sql.QueryAsync<users>(sqlQuery2, new { Id = users.Instance.id })).ToList();
-                    realId.Equals(users.Instance.id);
 
                 }
                 await sql.CloseAsync();
@@ -143,9 +124,8 @@ namespace Tuoksu_inventory.classes
         // TO-DO : Validate user input in depth. Done a lil bit, i replaced whitespaces with a '_'.
         public static async Task AddFragrancesAsync(SqlConnection sql)
         {
-            
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            
+
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(users.Instance.username, sql);
             
 
@@ -236,7 +216,7 @@ namespace Tuoksu_inventory.classes
         // remove fragrance by id, only if it belongs to the current user
         public static async Task RemoveFragranceAsync(SqlConnection sql, int id, string username)
         {
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(username, sql);
 
             
@@ -287,9 +267,8 @@ namespace Tuoksu_inventory.classes
         // List all fragrances for the current user
         public static async Task ListFragrancesForCurrentUser(SqlConnection sql, string username)
         {
-            
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             string sqlQuery3 = "use fragrances; select * from tuoksut where userId = @Id";
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(username, sql);
             try
             {
@@ -338,8 +317,7 @@ namespace Tuoksu_inventory.classes
         // Method to check if a user exists in the database
         public static async Task CheckIfUserExists(string username, SqlConnection sqlConnection)
         {
-
-            var sqlcon = sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             string sqlQuery = "SELECT * FROM users WHERE username = @Username;";
 
             try
@@ -411,7 +389,6 @@ namespace Tuoksu_inventory.classes
         public static async Task CreateUser(string username, string password, string email)
         {
             var sqlConnection = CONNECTIONHELPER();
-            var sqlcon = sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
 
             await CheckIfUserExists(username,  CONNECTIONHELPER());
             if (userExists)
@@ -466,7 +443,7 @@ namespace Tuoksu_inventory.classes
         // Method to verify if an email is already in use
         public static async Task VerifyEmail(string email, SqlConnection sql)
         {
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             string sqlQuery = "SELECT COUNT(1) FROM users WHERE email = @Email;";
             try
             {
@@ -494,6 +471,7 @@ namespace Tuoksu_inventory.classes
         // This method is not in use currently, might be useful later.
         public static async Task<int> SetId(string username, SqlConnection sql)
         {
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             string sqlQuery = "select top 1 * from users order by id desc;";
             try
             {
@@ -523,7 +501,7 @@ namespace Tuoksu_inventory.classes
         // Method to verify the password for the current user
         public static async Task VerifyPasswordForCurrentUserAsync(string password, string username, SqlConnection sql)
         {
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             string sqlQuery = "SELECT * FROM users WHERE username = @Username;";
             try
             {
@@ -596,7 +574,7 @@ namespace Tuoksu_inventory.classes
         // Method to suggest fragrances based on the weather. Ps : I want to add logic that takes the occasion into account as well.
         public static async Task FragranceForWeather(SqlConnection sql,double temperature)
         {
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(users.Instance.username, sql);
             // I plan on making this more sophisticated, but for now this will do. I will add a method that takes one random fragrance from each category later.
             // Just learned about the NEWID() so now i think this method is ready, if i figure out a way to make this better i will do it!
@@ -649,8 +627,8 @@ namespace Tuoksu_inventory.classes
         // Work in progress
         public static async Task SuggestFragranceForCasual(SqlConnection sql)
         {
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await UserLocation();
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             string sqlQuery = "select top 1 * from tuoksut where userId = @Id and (occasion = 'casual') order by NEWID();";
 
             await GetUserId(users.Instance.username, sql);
@@ -670,9 +648,9 @@ namespace Tuoksu_inventory.classes
         }
         public static async Task SuggestFragranceForDates(SqlConnection sql)
         {
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await UserLocation(); // might be useful later
 
-            var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             string sqlQuery = "select top 1 * from tuoksut where userId = @Id and (occasion = 'dates' or occasion = 'date') order by NEWID();";
 
             await GetUserId(users.Instance.username, sql);
