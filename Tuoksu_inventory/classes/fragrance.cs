@@ -599,7 +599,7 @@ namespace Tuoksu_inventory.classes
         {
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(users.Instance.username, sql);
-
+            // I plan on making this more sophisticated, but for now this will do. I will add a method that takes one random fragrance from each category later.
             var sqlQuery = "select * from tuoksut where userId = @Id and (category = 'gourmand' OR category = 'amber' or weather = 'cold' or weather = 'cold sunny' );";
 
             try
