@@ -30,6 +30,7 @@ namespace Tuoksu_inventory.classes
         public string weather { get; set; }
         public string occasion { get; set; }
         public static bool owned { get; set; }
+        
        
         // note to self: implement async/await properly later.
 
@@ -691,7 +692,7 @@ namespace Tuoksu_inventory.classes
                 Console.WriteLine(" An error occurred while suggesting fragrance for dates: " + ex.Message);
             }
         }
-        public static async Task IfAdmin(SqlConnection sql,string username)
+        public static async Task IsAdmin(SqlConnection sql,string username)
         {
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             string sqlQuery = "select isAdmin from users where username = @Username;";
@@ -701,21 +702,24 @@ namespace Tuoksu_inventory.classes
                 var userList = (await sql.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
                 foreach (var user in userList)
                 {
-                    if (username == "Admin")
+                    if(user.isAdmin == 1)
                     {
-                        users.Instance.isAdmin = true;
+                        
+                        Console.WriteLine(" User is an admin.");
                     }
                     else
                     {
-                        users.Instance.isAdmin = false;
+                        
+                        Console.WriteLine(" User is not an admin.");
                     }
+                    users.Instance.isAdmin = user.isAdmin;
                 }
-                sql.Close();
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
-                Console.WriteLine(" An error occurred : " + ex.Message);
+                Console.WriteLine(" An error occurred while checking admin status: " + ex.Message);
             }
+
         }
         // Additional classes can be added here as needed
         public class IpLocation

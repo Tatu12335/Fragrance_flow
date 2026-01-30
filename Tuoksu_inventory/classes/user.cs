@@ -8,8 +8,8 @@
         public string email { get; set; }
         public string PasswordHash { get; set; }
         public string salt { get; set; }
-        public bool isBanned { get; set; } = false;
-        public bool isAdmin { get; set; } = false;
+        public int isBanned { get; set; } = 0;
+        public int isAdmin { get; set; } = 0;
 
     }
 }

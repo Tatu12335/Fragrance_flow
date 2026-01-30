@@ -1,8 +1,12 @@
-﻿//hours wasted writing, debugging and learning sql,wpf etc : 18hrs 0mins
+﻿//hours wasted writing, debugging and learning sql,wpf etc : 19hrs 0mins
 
+using Microsoft.Data.SqlClient;
 using Microsoft.Identity.Client;
-using Tuoksu_inventory.classes;
+using System.Data.Common;
+using System.Data.SqlTypes;
+using System.Diagnostics.Metrics;
 using System.Text;
+using Tuoksu_inventory.classes;
 
 class Program
 {
@@ -58,9 +62,21 @@ class Program
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine(" User found. Please enter your password to continue.");            
+                    Console.WriteLine(" User found. Please enter your password to continue.");
                     
+
                     await fragrance.VerifyPasswordForCurrentUserAsync(ReadPassword(), username, connection);
+                    await fragrance.IsAdmin(connection,username);
+
+                    if(users.Instance.isAdmin == 1)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine("------ WELCOME ADMIN ------");
+                        Console.ResetColor();
+                        
+                        AdminPanel.LoadAdminPanel();
+                    }
+
                     Console.ForegroundColor = ConsoleColor.Green;
                     if (fragrance.passwordExists)
                     {
