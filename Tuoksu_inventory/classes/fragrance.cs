@@ -78,35 +78,29 @@ namespace Tuoksu_inventory.classes
             return null;
         }
         // Needs work.
-        public static async Task DoesUserHaveTheSameFragrance(string username,SqlConnection sql)
+        public static async Task DoesUserHaveTheSameFragrance(string username,SqlConnection sql,string frag)
         {
             
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(username, sql);
-
-            string sqlQuery = "select * from tuoksut where userId = @Id;";
+            string sqlQuery2 = "select Count(1) from tuoksut where userId = @Id and Name like @Name;";
+            //string sqlQuery = "select * from tuoksut where userId = @Id;";
             var name = await GetAllFragrances(sql);
-            
+            var cleanFrag = frag.Trim();
             try
             {
-
                 await sql.OpenAsync();
-                var userList = (await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id })).ToList();
-                foreach (var frag in userList)
+
+                var rowsEffected = (await sql.ExecuteScalarAsync<int>(sqlQuery2, new { Id = users.Instance.id, Name = cleanFrag + "%" }));
+
+                if (rowsEffected > 0)
                 {
-                    
-                    if (name.Contains(frag))
-                    {
-                        Console.WriteLine(" User already has this fragrance in their inventory.");
-                        owned = true;
-                        return;
-                    }
-                    else
-                    {
-                       owned = false;
-                    }
+                    Console.WriteLine($" user already has : {frag}");
+                    Environment.Exit(0);
                 }
-                
+                // Do nothing}
+ 
+                 await sql.CloseAsync();
             }
             catch (Exception ex)
             {
@@ -163,18 +157,18 @@ namespace Tuoksu_inventory.classes
 
             Console.WriteLine(" Whats the name of the fragrance");
             Console.Write(">");
-            var name = Console.ReadLine().ToLower().Replace(" ","_");
+            var name = Console.ReadLine()?.Trim().ToLower();
             if (string.IsNullOrWhiteSpace(name))
             {
                 Console.WriteLine(" Name cannot be empty. Aborting fragrance addition.");
                 return;
             }
-            
-            await DoesUserHaveTheSameFragrance(users.Instance.username, sql);
+
+            await DoesUserHaveTheSameFragrance(users.Instance.username, sql,name);
             
             Console.WriteLine(" Whats the brand of the fragrance");
             Console.Write(">");
-            var brand = Console.ReadLine().ToLower().Replace(" ", "_");
+            var brand = Console.ReadLine()?.Trim().ToLower();
             if (string.IsNullOrWhiteSpace(brand))
             {
                 Console.WriteLine(" Brand cannot be empty. Aborting fragrance addition.");
@@ -183,7 +177,7 @@ namespace Tuoksu_inventory.classes
 
             Console.WriteLine(" List some notes (comma separated)");
             Console.Write(">");
-            var notes = Console.ReadLine().ToLower().Replace(" ", "_");
+            var notes = Console.ReadLine()?.Trim().ToLower();
             if (string.IsNullOrWhiteSpace(notes))
             {
                 Console.WriteLine(" Notes cannot be empty. Aborting fragrance addition.");
@@ -192,7 +186,7 @@ namespace Tuoksu_inventory.classes
 
             Console.WriteLine(" Whats the category (gourmand,fresh,amber,etc.)");
             Console.Write(">");
-            var category = Console.ReadLine().Replace(" ", "_");
+            var category = Console.ReadLine()?.Trim().ToLower();
             if (string.IsNullOrWhiteSpace(category))
             {
                 Console.WriteLine(" Category cannot be empty. Aborting fragrance addition.");
@@ -201,7 +195,7 @@ namespace Tuoksu_inventory.classes
 
             Console.WriteLine(" Most common weather to wear it in (cold, warm, etc.)");
             Console.Write(">");
-            var weather = Console.ReadLine().ToLower().Replace(" ", "_");
+            var weather = Console.ReadLine()?.Trim().ToLower();
             if (string.IsNullOrWhiteSpace(weather))
             {
                 Console.WriteLine(" Weather cannot be empty. Aborting fragrance addition.");
@@ -210,7 +204,7 @@ namespace Tuoksu_inventory.classes
 
             Console.WriteLine(" Most common occasion to wear it in (casual, formal, etc.)");
             Console.Write(">");
-            var occasion = Console.ReadLine().ToLower().Replace(" ", "_");
+            var occasion = Console.ReadLine()?.Trim().ToLower(); ;
             if (string.IsNullOrWhiteSpace(occasion))
             {
                 Console.WriteLine(" Occasion cannot be empty. Aborting fragrance addition.");
@@ -605,7 +599,8 @@ namespace Tuoksu_inventory.classes
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(users.Instance.username, sql);
             // I plan on making this more sophisticated, but for now this will do. I will add a method that takes one random fragrance from each category later.
-            var sqlQuery = "select * from tuoksut where userId = @Id and (category = 'gourmand' OR category = 'amber' or weather = 'cold' or weather = 'cold sunny' );";
+            // Just learned about the NEWID() so now i think this method is ready, if i figure out a way to make this better i will do it!
+            var sqlQuery = "select top 1 * from tuoksut where userId = @Id and (category = 'gourmand' OR category = 'amber' or weather = 'cold' or weather = 'cold sunny' ) order by NEWID();";
 
             try
             {
@@ -624,7 +619,7 @@ namespace Tuoksu_inventory.classes
                 else if (temperature > 10 && temperature <= 20)
                 {
                     Console.WriteLine(" It's mild outside. You might want to wear fresh and floral fragrances. For example");
-                    sqlQuery = "select * from tuoksut where userId = @Id and (category = 'floral' or category = 'fresh');";
+                    sqlQuery = "select top 1 * from tuoksut where userId = @Id and (category = 'floral' or category = 'fresh') order by NEWID();";
 
                     await sql.OpenAsync();
                     var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
@@ -635,7 +630,7 @@ namespace Tuoksu_inventory.classes
                 }
                 else
                 {
-                    sqlQuery = "select * from tuoksut where userId = @Id and (category = 'citrusy' or category = 'aquatic' or 'fresh');";
+                    sqlQuery = "select top 1 * from tuoksut where userId = @Id and (category = 'citrusy' or category = 'aquatic' or 'fresh') order by NEWID();";
                     Console.WriteLine(" It's warm outside. You might want to wear light and citrusy fragrances. For Example\n");
 
                     await sql.OpenAsync();
@@ -656,7 +651,7 @@ namespace Tuoksu_inventory.classes
         {
             await UserLocation();
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "select * from tuoksut where userId = @Id and (occasion = 'casual');";
+            string sqlQuery = "select top 1 * from tuoksut where userId = @Id and (occasion = 'casual') order by NEWID();";
 
             await GetUserId(users.Instance.username, sql);
             try
@@ -678,7 +673,7 @@ namespace Tuoksu_inventory.classes
             await UserLocation(); // might be useful later
 
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "select * from tuoksut where userId = @Id and (occasion = 'dates' or occasion = 'date');";
+            string sqlQuery = "select top 1 * from tuoksut where userId = @Id and (occasion = 'dates' or occasion = 'date') order by NEWID();";
 
             await GetUserId(users.Instance.username, sql);
             
@@ -696,7 +691,6 @@ namespace Tuoksu_inventory.classes
                 Console.WriteLine(" An error occurred while suggesting fragrance for dates: " + ex.Message);
             }
         }
-        // Work in progress
        
         // Additional classes can be added here as needed
         public class IpLocation
