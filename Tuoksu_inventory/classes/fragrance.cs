@@ -1,10 +1,12 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
+using System;
 using System.Security.Cryptography;
 using System.Text;
 using System.Net.Http.Json;
 using System.Globalization;
 using Microsoft.Identity.Client;
+using System.Threading.Tasks;
 namespace Tuoksu_inventory.classes
 {
     /*
@@ -51,8 +53,8 @@ namespace Tuoksu_inventory.classes
             }
 
         }
-        // Doesnt really work as intended yet.
-        public static async Task <fragrance>GetAllFragrances(SqlConnection sql)
+        // Doesnt really work as intended yet. Well now it does :)
+        public static async Task<List<fragrance>>GetAllFragrances(SqlConnection sql)
         {
             await GetUserId(users.Instance.username, sql);
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
@@ -62,17 +64,17 @@ namespace Tuoksu_inventory.classes
             {                
                 await sql.OpenAsync();
                 var fragranceList = (await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id })).ToList();
-                foreach (var Fragrance in fragranceList)
-                {
-                   return Fragrance;
-                }
+                
+                
+                   return fragranceList;
+                
                 sql.Close();
             }
             catch (Exception ex)
             {
                 Console.WriteLine(" An error occurred : " + ex.Message);
             }
-            return fragrance.Instance;
+            return null;
         }
         // Same as above, needs work.
         public static async Task DoesUserHaveTheSameFragrance(string username,SqlConnection sql)
@@ -139,6 +141,7 @@ namespace Tuoksu_inventory.classes
 
         }
         // Method to add a new fragrance to the database
+        // TO-DO : Validate user input in depth
         public static async Task AddFragrancesAsync(SqlConnection sql)
         {
             
@@ -411,10 +414,11 @@ namespace Tuoksu_inventory.classes
             }
             return new SqlConnection(connectionString);
         }
+        
         // Method to create a new user in the database
         public static async Task CreateUser(string username, string password, string email)
         {
-            await CheckIfUserExists(username, CONNECTIONHELPER());
+            await CheckIfUserExists(username,  CONNECTIONHELPER());
             if (userExists)
             {
                 Console.WriteLine(" User already exists. Aborting user creation.");
@@ -423,7 +427,7 @@ namespace Tuoksu_inventory.classes
             else
             {
                 Console.WriteLine(" Creating new user...");
-                var sqlConnection = CONNECTIONHELPER();
+                var sqlConnection =  CONNECTIONHELPER();
 
                 var sqlcon = sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
 
@@ -648,6 +652,7 @@ namespace Tuoksu_inventory.classes
                 Console.WriteLine(" An error occurred while fetching fragrance for weather: " + ex.Message);
             }
         }
+        // Work in progress
         public static async Task SuggestFragranceForCasual(SqlConnection sql)
         {
             await UserLocation();
@@ -692,6 +697,7 @@ namespace Tuoksu_inventory.classes
                 Console.WriteLine(" An error occurred while suggesting fragrance for dates: " + ex.Message);
             }
         }
+        // Work in progress
         public static async Task IsAdmin(SqlConnection sql,string username)
         {
             var sqlcon = sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
@@ -737,8 +743,6 @@ namespace Tuoksu_inventory.classes
             public  string timezone { get; set; }
             public  string isp { get; set; }
             public  string org { get; set; }
-            public  string @as { get; set; }
-            public  string query { get; set; }
         }
         // Static class for password hashing and verification
         public static class PasswordHasher

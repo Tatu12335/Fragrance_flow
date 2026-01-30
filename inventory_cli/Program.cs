@@ -66,7 +66,7 @@ class Program
                     
 
                     await fragrance.VerifyPasswordForCurrentUserAsync(ReadPassword(), username, connection);
-                    await fragrance.IsAdmin(connection,username);
+                    //await fragrance.IsAdmin(connection,username);
 
                     if(users.Instance.isAdmin == 1)
                     {
@@ -116,7 +116,7 @@ class Program
                             case "remove":
                                 try
                                 {
-                                    await fragrance.RemoveFragranceAsync(connection, users.Instance.id,username);
+                                    await fragrance.RemoveFragranceAsync(connection, users.Instance.id, username);
                                 }
                                 catch (Exception ex)
                                 {
