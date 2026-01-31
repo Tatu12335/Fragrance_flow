@@ -16,12 +16,33 @@ namespace Tuoksu_inventory.classes
         public string AdminName { get; set; }
         public string AdminEmail { get; set; }
 
-        public static async Task GetAdminPanelByIdAsync(SqlConnection sql)
+        public static async Task AdminCommands()
         {
-            
-            
-            
-            
+          
+           
+            string input = Console.ReadLine();
+            string[] parts = input.Split(' ');
+            string command = parts[0].ToLower();
+            if (string.IsNullOrEmpty(command))
+            {
+                Console.WriteLine(" Command cant be empty");
+                Environment.Exit(0);
+            }
+           switch (command)
+           {
+                case "view-users":
+                    break;
+                case "ban":
+                   
+                    
+                    break;
+                default:
+                    Console.WriteLine(" Invalid command");
+                    Environment.Exit(0);
+                    break;
+            }
+
+
         }
         public static void LoadAdminPanel()
         {
@@ -35,6 +56,8 @@ namespace Tuoksu_inventory.classes
             Console.WriteLine(" \"remove --userId\" - removes given user from the users database");
             Console.WriteLine(" \"ban --userId\" - Bans a given user");
             Console.WriteLine("\"unban --userId\" Unbans a given user");
+            Console.WriteLine("\"promote --userId\" Promote user to admin");
+            Console.WriteLine("\"demote --userId\" Demote user to have normal privilages");
             Console.ResetColor();
         }
     }

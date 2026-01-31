@@ -21,6 +21,9 @@ namespace Tuoksu_inventory.classes
      Not sure if this is the best practice but it works for this simple CLI application.
      You might be asking why do i set the connection string so many times well, its because the whole code seems to break when i remove it so imma just keep it.
      started adding using statements instead of manually closing the connection and now every method gets their own sql connection
+     
+     I plan on splitting this project to multiple files once i start to lose my mind 
+       
      */
     public class fragrance
     {
@@ -57,7 +60,6 @@ namespace Tuoksu_inventory.classes
                 {
                     
                     var fragranceList = (await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id })).ToList();
-
                     
                     return fragranceList;
 
@@ -676,12 +678,15 @@ namespace Tuoksu_inventory.classes
                 
             }
         }
+        // Note take weather to account on this method 
         public static async Task SuggestBasedOnFeeling(string username)
         {
+            var temp = await UserLocation();
             using (var sql = CONNECTIONHELPER())
             {
+                await GetUserId(username);
                 var input = Feeling();
-
+                string sqlQuery = "select top 1 * from tuoksut where userId = @UserId order by NEWID();";
 
                 try
                 {
@@ -690,28 +695,93 @@ namespace Tuoksu_inventory.classes
                     {
                         case 1:
                             //Calm
+                            sqlQuery = "select top 1 * from tuoksut where userId = @UserId and (category = 'floral' or notes like @Notes) order by NEWID() ";                                    
+                            // Im not sure why i used tolist() but it works for now
+                            var rows = await sql.QueryAsync<fragrance>(sqlQuery, new {UserId = users.Instance.id, Notes = "flowers" + '%' });
+
+                            if (rows == null) Console.WriteLine(" No suitable fragrance in your collection ");
+
+                            foreach(var row in rows)
+                            {
+                                Console.WriteLine($" Name: {row.Name}, Brand: {row.Brand}, Notes: {row.notes},");
+
+                            }
+                            
                             break;
+                        
                         case 2:
                             //energetic
+                            sqlQuery = "select top 1 * from tuoksut where userId = @UserId and (category = fresh) order by NEWID() ";
+                            rows = await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id, Notes = "flowers" + '%' });
+
+                            if (rows == null) Console.WriteLine(" No suitable fragrance in your collection ");
+
+                            foreach (var row in rows)
+                            {
+                                Console.WriteLine($" Name: {row.Name}, Brand: {row.Brand}, Notes: {row.notes},");
+                            }
                             break;
+                        
                         case 3:
                             //powerful
+                            sqlQuery = "select top 1 * from tuoksut where userId = @UserId and (category = 'oud' or category = 'amber' or notes = @Notes)";
+                            rows = await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id, Notes = "vanilla" + '%' });
+
+                            if (rows == null) Console.WriteLine(" No suitable fragrance in your collection");
+
+                            foreach(var row in rows)
+                            {
+                                Console.WriteLine($" Name: {row.Name}, Brand: {row.Brand}, Notes: {row.notes},");
+                            }
                             break;
                     }
                 }
                 catch (FormatException fex)
                 {
+                    // I know this solution might not be by the book but it works for now
                     switch (input)
                     {
                         case "energetic":
+                            
+                            sqlQuery = "select top 1 * from tuoksut where userId = @UserId and (category = fresh) order by NEWID() ";
+                            var rows = await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id, Notes = "flowers" + '%' });
 
+                            if (rows == null) Console.WriteLine(" No suitable fragrance in your collection ");
+
+                            foreach (var row in rows)
+                            {
+                                Console.WriteLine($" Name: {row.Name}, Brand: {row.Brand}, Notes: {row.notes},");
+                            }
                             break;
+                       
                         case "powerful":
 
-                            break;
-                        case "calm":
+                            sqlQuery = "select top 1 * from tuoksut where userId = @UserId and (category = 'oud' or category = 'amber' or notes = @Notes)";
+                            rows = await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id, Notes = "vanilla" + '%' });
+
+                            if (rows == null) Console.WriteLine(" No suitable fragrance in your collection");
+
+                            foreach (var row in rows)
+                            {
+                                Console.WriteLine($" Name: {row.Name}, Brand: {row.Brand}, Notes: {row.notes},");
+                            }
 
                             break;
+                        
+                        case "calm":
+                            
+                            sqlQuery = "select top 1 * from tuoksut where userId = @UserId and (category = 'floral' or notes like @Notes) order by NEWID() ";
+                            
+                            rows = await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id, Notes = "flowers" + '%' });
+
+                            if (rows == null) Console.WriteLine(" No suitable fragrance in your collection ");
+
+                            foreach (var row in rows)
+                            {
+                                Console.WriteLine($" Name: {row.Name}, Brand: {row.Brand}, Notes: {row.notes},");
+
+                            }
+                                break;
                         default:
                             Console.WriteLine(" Invalid command ");
                             Console.WriteLine(input);

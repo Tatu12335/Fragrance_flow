@@ -1,4 +1,4 @@
-﻿//hours wasted writing, debugging and learning sql,wpf etc : 25hrs 30mins
+﻿//hours wasted writing, debugging and learning sql,wpf etc : 26hrs 30mins
 
 using Microsoft.Data.SqlClient;
 using Microsoft.Identity.Client;
@@ -67,8 +67,8 @@ class Program
 
                     await fragrance.VerifyPasswordForCurrentUserAsync(ReadPassword(), username);
                     // The code doesnt work if i await the getadminstatus, I dont know why tho.
-                    await fragrance.GetAdminStatus(username);
-                    //if (users.Instance.isAdmin == 1) AdminPanel.LoadAdminPanel();
+                    fragrance.GetAdminStatus(username);
+                    
 
                     Console.ForegroundColor = ConsoleColor.Green;
                     if (fragrance.passwordExists)
