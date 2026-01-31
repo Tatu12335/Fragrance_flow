@@ -153,11 +153,11 @@ class Program
                             case "suggest -f":
                                 try
                                 {
-
+                                   await fragrance.SuggestBasedOnFeeling(username);
                                 }
                                 catch(Exception ex)
                                 {
-                                    Console.WriteLine(" An error occured on command \"suggest -f\"");
+                                    Console.WriteLine(" An error occured on command \"suggest -f\"" + ex.Message);
                                 }
                                 break;
                             default:
@@ -281,6 +281,6 @@ class Program
             Console.WriteLine("");
 
         }
-
+        
     }
 }

@@ -9,6 +9,8 @@ using Microsoft.Identity.Client;
 using System.Threading.Tasks;
 using System.Xml;
 using Azure.Core;
+using System.Reflection.Metadata;
+using Microsoft.IdentityModel.Tokens;
 namespace Tuoksu_inventory.classes
 {
     /*
@@ -18,6 +20,7 @@ namespace Tuoksu_inventory.classes
      I joined them via userId foreign key in tuoksut table.
      Not sure if this is the best practice but it works for this simple CLI application.
      You might be asking why do i set the connection string so many times well, its because the whole code seems to break when i remove it so imma just keep it.
+     started adding using statements instead of manually closing the connection and now every method gets their own sql connection
      */
     public class fragrance
     {
@@ -43,59 +46,63 @@ namespace Tuoksu_inventory.classes
 
         }
         // Doesnt really work as intended yet. Well now it does :)
-        public static async Task<List<fragrance>>GetAllFragrances(SqlConnection sql)
+        public static async Task<List<fragrance>> GetAllFragrances()
         {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            await GetUserId(users.Instance.username, sql);
-            string sqlQuery = "select * from tuoksut where userId = @UserId;";
-
-            try
-            {                
-                await sql.OpenAsync();
-                var fragranceList = (await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id })).ToList();
-
-                sql.Close();
-                return fragranceList;
-                
-                
-            }
-            catch (Exception ex)
+            using (var sql = CONNECTIONHELPER())
             {
-                Console.WriteLine(" An error occurred 1 : " + ex.Message);
+                await GetUserId(users.Instance.username, sql);
+                string sqlQuery = "select * from tuoksut where userId = @UserId;";
+
+                try
+                {
+                    await sql.OpenAsync();
+                    var fragranceList = (await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id })).ToList();
+
+                    sql.Close();
+                    return fragranceList;
+
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occurred 1 : " + ex.Message);
+                }
+                return null;
             }
-            return null;
         }
         // Needs work.
-        public static async Task DoesUserHaveTheSameFragrance(string username,SqlConnection sql,string frag)
+        public static async Task DoesUserHaveTheSameFragrance(string username, string frag)
         {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            await GetUserId(username, sql);
-            string sqlQuery2 = "select Count(1) from tuoksut where userId = @Id and Name like @Name;";
-            //string sqlQuery = "select * from tuoksut where userId = @Id;";
-            var name = await GetAllFragrances(sql);
-            var cleanFrag = frag.Trim();
-            try
+            using (var sql = CONNECTIONHELPER())
             {
-                await sql.OpenAsync();
-
-                var rowsEffected = (await sql.ExecuteScalarAsync<int>(sqlQuery2, new { Id = users.Instance.id, Name = cleanFrag + "%" }));
-
-                if (rowsEffected > 0)
+                await GetUserId(username, sql);
+                string sqlQuery2 = "select Count(1) from tuoksut where userId = @Id and Name like @Name;";
+                //string sqlQuery = "select * from tuoksut where userId = @Id;";
+                var name = await GetAllFragrances();
+                var cleanFrag = frag.Trim();
+                try
                 {
-                    Console.WriteLine($" user already has : {frag}");
-                    Environment.Exit(0);
+                    await sql.OpenAsync();
+
+                    var rowsEffected = (await sql.ExecuteScalarAsync<int>(sqlQuery2, new { Id = users.Instance.id, Name = cleanFrag + "%" }));
+
+                    if (rowsEffected > 0)
+                    {
+                        Console.WriteLine($" user already has : {frag}");
+                        Environment.Exit(0);
+                    }
+                    // Do nothing}
+
+                    await sql.CloseAsync();
                 }
-                // Do nothing}
- 
-                 await sql.CloseAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occurred 2 : " + ex.Message);
-            }
-            finally
-            {
-                await sql.CloseAsync();
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occurred 2 : " + ex.Message);
+                }
+                finally
+                {
+                    await sql.CloseAsync();
+                }
             }
         }
         // Method to get user ID based on username
@@ -145,7 +152,7 @@ namespace Tuoksu_inventory.classes
                 return;
             }
 
-            await DoesUserHaveTheSameFragrance(users.Instance.username, sql,name);
+            await DoesUserHaveTheSameFragrance(users.Instance.username, name);
             
             Console.WriteLine(" Whats the brand of the fragrance");
             Console.Write(">");
@@ -691,13 +698,55 @@ namespace Tuoksu_inventory.classes
             }
             await sql.CloseAsync();
         }
-        public static async Task SuggestBasedOnFeeling(SqlConnection sql,string input)
+        public static async Task SuggestBasedOnFeeling(string username)
         {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            Feeling();
-            
+            using (var sql = CONNECTIONHELPER())
+            {
+                var input = Feeling();
 
-            
+
+                try
+                {
+                    int inputInt = Convert.ToInt32(input);
+                    switch (inputInt)
+                    {
+                        case 1:
+                            //Calm
+                            break;
+                        case 2:
+                            //energetic
+                            break;
+                        case 3:
+                            //powerful
+                            break;
+                    }
+                }
+                catch (FormatException fex)
+                {
+                    switch (input)
+                    {
+                        case "energetic":
+
+                            break;
+                        case "powerful":
+
+                            break;
+                        case "calm":
+
+                            break;
+                        default:
+                            Console.WriteLine(" Invalid command ");
+                            Console.WriteLine(input);
+                            break;
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occured : " + ex.Message);
+                }
+
+            }
         }
         // Method to suggest fragrances based on the weather. Ps : I want to add logic that takes the occasion into account as well.
         public static async Task FragranceForWeather(SqlConnection sql,double temperature)
@@ -797,17 +846,21 @@ namespace Tuoksu_inventory.classes
                 Console.WriteLine(" An error occurred while suggesting fragrance for dates: " + ex.Message);
             }
         }
-        public static void Feeling()
+        public static string Feeling()
         {
             Console.ResetColor();
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine(" What are you feeling today? (1-6)");
+            Console.WriteLine(" What are you feeling today? (1-3 or with names)");
             Console.WriteLine(" 1. Calm ");
             Console.WriteLine(" 2. Energetic");
             Console.WriteLine(" 3. Powerful");
             Console.Write(" >");
+            var input = Console.ReadLine()?.Trim().ToLower();
 
+            if (string.IsNullOrEmpty(input)) Environment.Exit(0);
+            
+            return input;
         }
         // Additional classes can be added here as needed
         public class IpLocation
