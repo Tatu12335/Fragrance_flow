@@ -1,4 +1,4 @@
-﻿//hours wasted writing, debugging and learning sql,wpf etc : 21hrs 40mins
+﻿//hours wasted writing, debugging and learning sql,wpf etc : 22hrs 40mins
 
 using Microsoft.Data.SqlClient;
 using Microsoft.Identity.Client;
@@ -125,7 +125,18 @@ class Program
                                     Console.ResetColor();
                                 }
                                 break;
-                            
+                            case "sotd":
+                                try
+                                {
+                                    
+                                    await fragrance.ScentOfTheDay(connection, username, await fragrance.UserLocation());
+                                }
+                                catch(Exception ex)
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine(" Error on main's scentoftheday call : " + ex.Message);
+                                }
+                                break ;
                             case "help":
                                 ShowPrompt();
                                 break;
@@ -256,6 +267,7 @@ class Program
             Console.WriteLine(" list - List all fragrances");
             Console.WriteLine(" remove - Remove a fragrance by ID");
             Console.WriteLine(" suggest - Get fragrance suggestions based on the weather\n( NOTE : The program gets your location automatically if you use an vpn it wont work correctly)\n");
+            Console.WriteLine(" sotd - Scent of the day");
             Console.WriteLine(" help - Show this prompt");
             Console.WriteLine("");
 

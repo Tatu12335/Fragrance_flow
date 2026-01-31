@@ -10,6 +10,7 @@ namespace Tuoksu_inventory.classes
 {
     public class AdminPanel
     {
+        // NOTE TO ME : Continue working on the adminpanel.
         public static AdminPanel Instance { get; } = new AdminPanel();
         public int Id { get; set; }
         public string AdminName { get; set; }

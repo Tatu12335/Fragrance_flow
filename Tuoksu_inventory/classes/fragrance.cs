@@ -8,6 +8,7 @@ using System.Globalization;
 using Microsoft.Identity.Client;
 using System.Threading.Tasks;
 using System.Xml;
+using Azure.Core;
 namespace Tuoksu_inventory.classes
 {
     /*
@@ -288,7 +289,7 @@ namespace Tuoksu_inventory.classes
 
 
         }
-        // Debugging method for connection strings, i needed to debug my connection string issues multiple times. 
+        // Debugging method for connection strings, i needed to debug my connection string§ multiple times. 
         public static void DebugConnectionString(string? input)
         {
             if (input == null) return;
@@ -534,7 +535,7 @@ namespace Tuoksu_inventory.classes
         }
         
         // Method to fetch and display the user's IP location
-        public static async Task UserLocation()
+        public static async Task <double> UserLocation()
         {
             
 
@@ -548,7 +549,7 @@ namespace Tuoksu_inventory.classes
                     var weatherUrl = $" https://api.open-meteo.com/v1/forecast?latitude={location.lat.ToString(CultureInfo.InvariantCulture)}&longitude={location.lon.ToString(CultureInfo.InvariantCulture)}&current_weather=true&temperature_unit=celsius";
                         
                         var response = await client.GetAsync(weatherUrl);
-                    if (!response.IsSuccessStatusCode) return;
+                    if (!response.IsSuccessStatusCode) return 0;
 
                     var json = await response.Content.ReadAsStringAsync();
 
@@ -558,7 +559,7 @@ namespace Tuoksu_inventory.classes
                         
                     var temperature = currentWeather
                         .GetProperty("temperature").GetDouble();    
-
+                        return temperature;
                 }
                 else
                 {
@@ -570,7 +571,77 @@ namespace Tuoksu_inventory.classes
             {
                 Console.WriteLine(" An error occurred while fetching IP location: " + ex.Message);
             }
+            return 0;
         }
+        // I plan on taking time of the day into account on this method, maybe even today, i have a vision already on how to implement it.
+        public static async Task ScentOfTheDay(SqlConnection sql, string username, double temperature)
+        {
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            await GetUserId(username, sql);
+            Console.Clear();
+            Console.WriteLine($"Scent of the day!! (TEMP : {temperature}) : ");
+            
+
+            string sqlQuery = "Select top 1 * from tuoksut where userId = @Id ";
+
+            if (temperature >= 10 && temperature <= 20)
+            {
+                sqlQuery = "select top 1 * from tuoksut where userId = @Id and ( category = 'floral' or category = 'fresh' or weather = 'mild' or weather = 'mild sunny') order by NEWID();";
+                try
+                {
+                    if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
+                    
+                    var rowsEffected = (await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id })).ToList();
+                    foreach( var row in rowsEffected )
+                    {
+                        Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($" An error occured on scentoftheday : " + ex.Message);
+                }
+            }
+            else if (temperature > 20)
+            {
+                sqlQuery = "select top 1 * from tuoksut where userId = @Id and ( category = 'fresh' or category = 'airy' or weather = 'warm' or weather = 'warm sunny') order by NEWID();";
+                try
+                {
+                    if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
+
+                    var rowsAffected = (await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id })).ToList();
+                    foreach (var row in rowsAffected)
+                    {
+                        Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occured on scentoftheday : " + ex.Message);
+                }
+            }
+            else
+            {
+                sqlQuery = "select top 1 * from tuoksut where userId = @Id and ( category = 'gourmand' or category = 'amber' or weather = 'cold' or weather = 'cold sunny') order by NEWID();";
+
+                try
+                {
+                    if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
+
+                    var rowsEffected = (await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id })).ToList();
+                    foreach (var row in rowsEffected)
+                    {
+                        Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
+                    }
+                    
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine(" An error occured on scentoftheday : " + ex.Message);
+                }
+            }
+        }
+            
         // Method to suggest fragrances based on the weather. Ps : I want to add logic that takes the occasion into account as well.
         public static async Task FragranceForWeather(SqlConnection sql,double temperature)
         {
@@ -649,7 +720,7 @@ namespace Tuoksu_inventory.classes
         public static async Task SuggestFragranceForDates(SqlConnection sql)
         {
             sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            await UserLocation(); // might be useful later
+            await UserLocation(); // might be useful later, At this point i started thinking more about recources so might comment this out 
 
             string sqlQuery = "select top 1 * from tuoksut where userId = @Id and (occasion = 'dates' or occasion = 'date') order by NEWID();";
 
