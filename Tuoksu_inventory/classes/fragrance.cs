@@ -533,7 +533,30 @@ namespace Tuoksu_inventory.classes
             }
            await sql.CloseAsync();
         }
+        public static async Task GetAdminStatus(SqlConnection sql, string username)
+        {
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            await GetUserId(username, sql);
+            if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
+            string sqlQuery = "select isAdmin from users where id = @Id;";
+
+            try
+            {
+                var Response = await sql.QueryFirstOrDefaultAsync<users>(sqlQuery, new { Id = users.Instance.id });
+
+                if(Response.isAdmin == 1)
+                {
+                    AdminPanel.LoadAdminPanel();
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(" An error occured getting admin status : " + ex.Message);
+            }
+      
         
+        }
         // Method to fetch and display the user's IP location
         public static async Task <double> UserLocation()
         {
@@ -666,6 +689,7 @@ namespace Tuoksu_inventory.classes
                     Console.WriteLine(" An error occured on scentoftheday : " + ex.Message);
                 }
             }
+            await sql.CloseAsync();
         }
         public static async Task SuggestBasedOnFeeling(SqlConnection sql,string input)
         {

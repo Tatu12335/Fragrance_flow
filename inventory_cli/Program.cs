@@ -66,19 +66,14 @@ class Program
                     
 
                     await fragrance.VerifyPasswordForCurrentUserAsync(ReadPassword(), username, connection);
-                    
-
-                    if(users.Instance.isAdmin == 1)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.ResetColor();
-                        
-                        AdminPanel.LoadAdminPanel();
-                    }
+                    // The code doesnt work if i await the getadminstatus, I dont know why tho.
+                    fragrance.GetAdminStatus(connection, username);
+                    //if (users.Instance.isAdmin == 1) AdminPanel.LoadAdminPanel();
 
                     Console.ForegroundColor = ConsoleColor.Green;
                     if (fragrance.passwordExists)
                     {
+                        
                         Console.Clear();
                         Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine($"------ WELCOME BACK [{username}] ------");
@@ -89,6 +84,7 @@ class Program
                             case "add":
                                 try
                                 {
+                                    if (connection.State == System.Data.ConnectionState.Open) await connection.CloseAsync();
                                     await fragrance.AddFragrancesAsync(connection);
                                 }
                                 catch (Exception ex)
@@ -102,6 +98,7 @@ class Program
                             case "list":
                                 try
                                 {
+                                    if (connection.State == System.Data.ConnectionState.Open) await connection.CloseAsync();
                                     await fragrance.ListFragrancesForCurrentUser(connection, username);
                                 }
                                 catch (Exception ex)
@@ -115,6 +112,7 @@ class Program
                             case "remove":
                                 try
                                 {
+                                    if (connection.State == System.Data.ConnectionState.Open) await connection.CloseAsync();
                                     await fragrance.RemoveFragranceAsync(connection, users.Instance.id, username);
                                 }
                                 catch (Exception ex)
@@ -127,15 +125,16 @@ class Program
                             case "sotd":
                                 try
                                 {
-                                    
+                                    if (connection.State == System.Data.ConnectionState.Open) await connection.CloseAsync();
                                     await fragrance.ScentOfTheDay(connection, username, await fragrance.UserLocation());
                                 }
                                 catch(Exception ex)
                                 {
                                     Console.ForegroundColor = ConsoleColor.Red;
                                     Console.WriteLine(" Error on main's scentoftheday call : " + ex.Message);
+                                    Console.ResetColor();
                                 }
-                                break ;
+                                break;
                             case "help":
                                 ShowPrompt();
                                 break;
