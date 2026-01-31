@@ -50,15 +50,15 @@ namespace Tuoksu_inventory.classes
         {
             using (var sql = CONNECTIONHELPER())
             {
-                await GetUserId(users.Instance.username, sql);
+                await GetUserId(users.Instance.username);
                 string sqlQuery = "select * from tuoksut where userId = @UserId;";
 
                 try
                 {
-                    await sql.OpenAsync();
+                    
                     var fragranceList = (await sql.QueryAsync<fragrance>(sqlQuery, new { UserId = users.Instance.id })).ToList();
 
-                    sql.Close();
+                    
                     return fragranceList;
 
 
@@ -75,14 +75,14 @@ namespace Tuoksu_inventory.classes
         {
             using (var sql = CONNECTIONHELPER())
             {
-                await GetUserId(username, sql);
+                await GetUserId(username);
                 string sqlQuery2 = "select Count(1) from tuoksut where userId = @Id and Name like @Name;";
-                //string sqlQuery = "select * from tuoksut where userId = @Id;";
+                
                 var name = await GetAllFragrances();
                 var cleanFrag = frag.Trim();
                 try
                 {
-                    await sql.OpenAsync();
+                    
 
                     var rowsEffected = (await sql.ExecuteScalarAsync<int>(sqlQuery2, new { Id = users.Instance.id, Name = cleanFrag + "%" }));
 
@@ -91,130 +91,132 @@ namespace Tuoksu_inventory.classes
                         Console.WriteLine($" user already has : {frag}");
                         Environment.Exit(0);
                     }
-                    // Do nothing}
+                    // Do nothing
 
-                    await sql.CloseAsync();
+                    
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(" An error occurred 2 : " + ex.Message);
                 }
-                finally
-                {
-                    await sql.CloseAsync();
-                }
+               
             }
         }
         // Method to get user ID based on username
-        public static async Task GetUserId(string username, SqlConnection sql)
+        public static async Task GetUserId(string username)
         {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "select id from users where username = @Username;";
-            
-            try
+            using (var sql = CONNECTIONHELPER())
             {
-                await sql.OpenAsync();
-                var userList = (await sql.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
-                foreach (var user in userList)
+                string sqlQuery = "select id from users where username = @Username;";
+
+                try
                 {
-                    users.Instance.id = user.id;
 
+                    var userList = (await sql.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
+                    foreach (var user in userList)
+                    {
+                        users.Instance.id = user.id;
+
+                    }
+                 
                 }
-                await sql.CloseAsync();
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occurred 3 : " + ex.Message);
+                }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occurred 3 : " + ex.Message);
-            }
-
         }
         // Method to add a new fragrance to the database
-        // TO-DO : Validate user input in depth. Done a lil bit, i replaced whitespaces with a '_'.
-        public static async Task AddFragrancesAsync(SqlConnection sql)
+        // TO-DO : Validate user input in depth. Done a lil bit.
+        public static async Task AddFragrancesAsync()
         {
 
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            await GetUserId(users.Instance.username, sql);
-            
-
-            
-
-            string sqlQuery = "INSERT INTO tuoksut (userId, Name, Brand, notes, category, weather, occasion) VALUES (@UserId, @Name, @Brand, @notes, @category, @weather, @occasion);";
-            
-            
-
-            Console.WriteLine(" Whats the name of the fragrance");
-            Console.Write(">");
-            var name = Console.ReadLine()?.Trim().ToLower();
-            if (string.IsNullOrWhiteSpace(name))
+            using (var sql = CONNECTIONHELPER())
             {
-                Console.WriteLine(" Name cannot be empty. Aborting fragrance addition.");
-                return;
+
+
+                await GetUserId(users.Instance.username);
+
+
+
+
+                string sqlQuery = "INSERT INTO tuoksut (userId, Name, Brand, notes, category, weather, occasion) VALUES (@UserId, @Name, @Brand, @notes, @category, @weather, @occasion);";
+
+
+
+                Console.WriteLine(" Whats the name of the fragrance");
+                Console.Write(">");
+                var name = Console.ReadLine()?.Trim().ToLower();
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    Console.WriteLine(" Name cannot be empty. Aborting fragrance addition.");
+                    return;
+                }
+
+                await DoesUserHaveTheSameFragrance(users.Instance.username, name);
+
+                Console.WriteLine(" Whats the brand of the fragrance");
+                Console.Write(">");
+                var brand = Console.ReadLine()?.Trim().ToLower();
+                if (string.IsNullOrWhiteSpace(brand))
+                {
+                    Console.WriteLine(" Brand cannot be empty. Aborting fragrance addition.");
+                    return;
+                }
+
+                Console.WriteLine(" List some notes (comma separated)");
+                Console.Write(">");
+                var notes = Console.ReadLine()?.Trim().ToLower();
+                if (string.IsNullOrWhiteSpace(notes))
+                {
+                    Console.WriteLine(" Notes cannot be empty. Aborting fragrance addition.");
+                    return;
+                }
+
+                Console.WriteLine(" Whats the category (gourmand,fresh,amber,etc.)");
+                Console.Write(">");
+                var category = Console.ReadLine()?.Trim().ToLower();
+                if (string.IsNullOrWhiteSpace(category))
+                {
+                    Console.WriteLine(" Category cannot be empty. Aborting fragrance addition.");
+                    return;
+                }
+
+                Console.WriteLine(" Most common weather to wear it in (cold, warm, etc.)");
+                Console.Write(">");
+                var weather = Console.ReadLine()?.Trim().ToLower();
+                if (string.IsNullOrWhiteSpace(weather))
+                {
+                    Console.WriteLine(" Weather cannot be empty. Aborting fragrance addition.");
+                    return;
+                }
+
+                Console.WriteLine(" Most common occasion to wear it in (casual, formal, etc.)");
+                Console.Write(">");
+                var occasion = Console.ReadLine()?.Trim().ToLower(); ;
+                if (string.IsNullOrWhiteSpace(occasion))
+                {
+                    Console.WriteLine(" Occasion cannot be empty. Aborting fragrance addition.");
+                    return;
+                }
+
+
+
+
+                await sql.OpenAsync();
+                await sql.ExecuteAsync(sqlQuery, new
+                {
+                    UserId = users.Instance.id,
+                    Name = name,
+                    Brand = brand,
+                    notes = notes,
+                    category = category,
+                    weather = weather,
+                    occasion = occasion
+                });
+                Console.WriteLine(" Fragrance added successfully.");
+                await sql.CloseAsync();
             }
-
-            await DoesUserHaveTheSameFragrance(users.Instance.username, name);
-            
-            Console.WriteLine(" Whats the brand of the fragrance");
-            Console.Write(">");
-            var brand = Console.ReadLine()?.Trim().ToLower();
-            if (string.IsNullOrWhiteSpace(brand))
-            {
-                Console.WriteLine(" Brand cannot be empty. Aborting fragrance addition.");
-                return;
-            }
-
-            Console.WriteLine(" List some notes (comma separated)");
-            Console.Write(">");
-            var notes = Console.ReadLine()?.Trim().ToLower();
-            if (string.IsNullOrWhiteSpace(notes))
-            {
-                Console.WriteLine(" Notes cannot be empty. Aborting fragrance addition.");
-                return;
-            }
-
-            Console.WriteLine(" Whats the category (gourmand,fresh,amber,etc.)");
-            Console.Write(">");
-            var category = Console.ReadLine()?.Trim().ToLower();
-            if (string.IsNullOrWhiteSpace(category))
-            {
-                Console.WriteLine(" Category cannot be empty. Aborting fragrance addition.");
-                return;
-            }
-
-            Console.WriteLine(" Most common weather to wear it in (cold, warm, etc.)");
-            Console.Write(">");
-            var weather = Console.ReadLine()?.Trim().ToLower();
-            if (string.IsNullOrWhiteSpace(weather))
-            {
-                Console.WriteLine(" Weather cannot be empty. Aborting fragrance addition.");
-                return;
-            }
-
-            Console.WriteLine(" Most common occasion to wear it in (casual, formal, etc.)");
-            Console.Write(">");
-            var occasion = Console.ReadLine()?.Trim().ToLower(); ;
-            if (string.IsNullOrWhiteSpace(occasion))
-            {
-                Console.WriteLine(" Occasion cannot be empty. Aborting fragrance addition.");
-                return;
-            }
-
-
-
-
-            await sql.OpenAsync();
-            await sql.ExecuteAsync(sqlQuery, new
-            {
-                UserId = users.Instance.id,
-                Name = name,
-                Brand = brand,
-                notes = notes,
-                category = category,
-                weather = weather,
-                occasion = occasion
-            });
-            Console.WriteLine(" Fragrance added successfully.");
-            await sql.CloseAsync();
         }
         public static async Task UpdateFragrance()
         {
@@ -222,77 +224,76 @@ namespace Tuoksu_inventory.classes
             await TestConnection();
         }
         // remove fragrance by id, only if it belongs to the current user
-        public static async Task RemoveFragranceAsync(SqlConnection sql, int id, string username)
+        public static async Task RemoveFragranceAsync(int id, string username)
         {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            await GetUserId(username, sql);
-
-            
-
-            Console.WriteLine(" Enter the id of the fragrance you want removed");
-            Console.Write(">");
-            id = Convert.ToInt16(Console.ReadLine());
-            var sqlQuery = "DELETE FROM tuoksut WHERE id = @Id AND userId = @UserId;";
-
-
-            try
+            using (var sql = CONNECTIONHELPER())
             {
-                await sql.OpenAsync();
+                await GetUserId(username);
+
+
+
+                Console.WriteLine(" Enter the id of the fragrance you want removed");
+                Console.Write(">");
+                id = Convert.ToInt16(Console.ReadLine());
+                var sqlQuery = "DELETE FROM tuoksut WHERE id = @Id AND userId = @UserId;";
+
 
                 try
                 {
-                    var fragranceToDelete = await sql.QueryFirstOrDefaultAsync<fragrance>("SELECT * FROM tuoksut WHERE id = @Id AND userId = @UserId;", new { Id = id, UserId = users.Instance.id });
-                    if (fragranceToDelete == null)
+                    
+
+                    try
                     {
-                        Console.WriteLine(" Fragrance not found or does not belong to the current user. Aborting removal.");
+                        var fragranceToDelete = await sql.QueryFirstOrDefaultAsync<fragrance>("SELECT * FROM tuoksut WHERE id = @Id AND userId = @UserId;", new { Id = id, UserId = users.Instance.id });
+                        if (fragranceToDelete == null)
+                        {
+                            Console.WriteLine(" Fragrance not found or does not belong to the current user. Aborting removal.");
+                            return;
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Magenta;
+                            Console.WriteLine(" Fragrance ownership verified.");
+                            await sql.ExecuteAsync(sqlQuery, new { Id = id, UserId = users.Instance.id });
+                            Console.WriteLine(" Fragrance removed successfully.");
+                            Console.ResetColor();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(" An error occurred while verifying fragrance ownership: " + ex.Message);
                         return;
                     }
-                    else
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occurred while opening connection: " + ex.Message);
+                }
+            }
+        }
+        // List all fragrances for the current user
+        public static async Task ListFragrancesForCurrentUser(string username)
+        {
+            using (var sql = CONNECTIONHELPER())
+            {
+                string sqlQuery3 = "use fragrances; select * from tuoksut where userId = @Id";
+                await GetUserId(username);
+                try
+                {
+                    
+                    var frags = await sql.QueryAsync<fragrance>(sqlQuery3, new { Id = users.Instance.id });
+                    foreach (var fragrance in frags)
                     {
-                        Console.ForegroundColor = ConsoleColor.Magenta;
-                        Console.WriteLine(" Fragrance ownership verified.");
-                        await sql.ExecuteAsync(sqlQuery, new { Id = id, UserId = users.Instance.id });
-                        Console.WriteLine(" Fragrance removed successfully.");
-                        Console.ResetColor();
+                        Console.WriteLine($" Fragrance ID: {fragrance.id}, Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes}, Category: {fragrance.category}, Most Common weather: {fragrance.weather}, Occasion: {fragrance.occasion}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(" An error occurred while verifying fragrance ownership: " + ex.Message);
-                    return;
+                    Console.WriteLine(" An error occured while listing fragrances: " + ex.Message);
                 }
-
+                
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occurred while opening connection: " + ex.Message);
-            }
-            finally
-            {
-                await sql.CloseAsync();
-            }
-        }
-        // List all fragrances for the current user
-        public static async Task ListFragrancesForCurrentUser(SqlConnection sql, string username)
-        {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery3 = "use fragrances; select * from tuoksut where userId = @Id";
-            await GetUserId(username, sql);
-            try
-            {
-                await sql.OpenAsync();
-                var frags = await sql.QueryAsync<fragrance>(sqlQuery3, new { Id = users.Instance.id });
-                foreach (var fragrance in frags)
-                {
-                    Console.WriteLine($" Fragrance ID: {fragrance.id}, Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes}, Category: {fragrance.category}, Most Common weather: {fragrance.weather}, Occasion: {fragrance.occasion}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occured while listing fragrances: " + ex.Message);
-            }
-            await sql.CloseAsync();
-   
 
 
         }
@@ -323,245 +324,220 @@ namespace Tuoksu_inventory.classes
         public static bool passwordExists = false;
         //
         // Method to check if a user exists in the database
-        public static async Task CheckIfUserExists(string username, SqlConnection sqlConnection)
+        public static async Task CheckIfUserExists(string username)
         {
-            sqlConnection.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "SELECT * FROM users WHERE username = @Username;";
-
-            try
+            using (var sqlConnection = CONNECTIONHELPER())
             {
-                //await sqlConnection.OpenAsync();
+                string sqlQuery = "SELECT * FROM users WHERE username = @Username;";
 
-                users.Instance.username = username;
-
-                var userList = (await sqlConnection.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
-                foreach (var user in userList)
+                try
                 {
-                    if (user.username == username)
+                    //await sqlConnection.OpenAsync();
+
+                    users.Instance.username = username;
+
+                    var userList = (await sqlConnection.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
+                    foreach (var user in userList)
                     {
-                        userExists = true;
+                        if (user.username == username)
+                        {
+                            userExists = true;
+                        }
+                        else
+                        {
+                            userExists = false;
+                        }
                     }
-                    else
-                    {
-                        userExists = false;
-                    }
+                    
                 }
-               await sqlConnection.CloseAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occurred 1: " + ex.Message);
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occurred 1: " + ex.Message);
+                }
             }
         }
         // Method to create and return a SQL connection, I figured it would be cleaner this way.
         public static SqlConnection CONNECTIONHELPER()
         {
-            string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            connectionString = connectionString.Trim('"');
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                return null;
-            }
-            else
-            {
-
-                connectionString = connectionString.Replace("\"", "").Trim();
-                try
-                {
-                    using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                        try
-                        {
-                            connection.Open();
-                            return connection;
-                        }
-                        catch (SqlException ex)
-                        {
-                            Console.WriteLine("Database connection failed: " + ex.Message);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("An error occurred: " + ex.Message);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(" An error occurred: " + ex.Message);
-                }
-            }
+            var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")?.Replace("\"", "").Trim();
             return new SqlConnection(connectionString);
         }
         
         // Method to create a new user in the database
         public static async Task CreateUser(string username, string password, string email)
         {
-            var sqlConnection = CONNECTIONHELPER();
-
-            await CheckIfUserExists(username,  CONNECTIONHELPER());
-            if (userExists)
+            using (var sqlConnection = CONNECTIONHELPER())
             {
-                Console.WriteLine(" User already exists. Aborting user creation.");
-                return;
-            }
-            else
-            {
-                Console.WriteLine(" Creating new user...");
 
-                string sqlQuery = "INSERT INTO users (username, PasswordHash, salt, email) VALUES (@Username, @PasswordHash, @Salt, @Email);";
-                
-                byte[] saltBytes;
-
-
-                
-                string passwordHash = PasswordHasher.HashPassword(password, out saltBytes);
-                
-               
-                string saltHex = Convert.ToHexString(saltBytes);
-
-                users.Instance.email = email;
-                users.Instance.username = username;
-                users.Instance.PasswordHash = passwordHash;
-                users.Instance.salt = saltHex;
-                
-                try
-                {
-                    var result = await sqlConnection.ExecuteAsync(sqlQuery, new
-                    {
-                        Email = email,
-                        Username = username,
-                        PasswordHash = passwordHash,
-                        Salt = saltHex,
-                    });
-
-                    Console.WriteLine(" User created successfully.");
-                }
-                catch (SqlException ex) when (ex.Number == 2627 || ex.Number == 2601) // Unique constraint error number
+                await CheckIfUserExists(username);
+                if (userExists)
                 {
                     Console.WriteLine(" User already exists. Aborting user creation.");
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine(" Creating new user...");
+
+                    string sqlQuery = "INSERT INTO users (username, PasswordHash, salt, email) VALUES (@Username, @PasswordHash, @Salt, @Email);";
+
+                    byte[] saltBytes;
+
+
+
+                    string passwordHash = PasswordHasher.HashPassword(password, out saltBytes);
+
+
+                    string saltHex = Convert.ToHexString(saltBytes);
+
+                    users.Instance.email = email;
+                    users.Instance.username = username;
+                    users.Instance.PasswordHash = passwordHash;
+                    users.Instance.salt = saltHex;
+
+                    try
+                    {
+                        var result = await sqlConnection.ExecuteAsync(sqlQuery, new
+                        {
+                            Email = email,
+                            Username = username,
+                            PasswordHash = passwordHash,
+                            Salt = saltHex,
+                        });
+
+                        Console.WriteLine(" User created successfully.");
+                    }
+                    catch (SqlException ex) when (ex.Number == 2627 || ex.Number == 2601) // Unique constraint error number
+                    {
+                        Console.WriteLine(" User already exists. Aborting user creation.");
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(" An error occurred while creating the user: " + ex.Message);
+                    }
+                }
+            }
+        }
+        // Method to verify if an email is already in use
+        public static async Task VerifyEmail(string email)
+        {
+            using (var sql = CONNECTIONHELPER())
+            {
+                string sqlQuery = "SELECT COUNT(1) FROM users WHERE email = @Email;";
+                try
+                {
+                    int rowsaffected = await sql.ExecuteScalarAsync<int>(sqlQuery, new { Email = email });
+                    if (rowsaffected <= 0)
+                    {
+                        emailExists = false;
+                    }
+                    else
+                    {
+                        emailExists = true;
+                        Console.WriteLine(" Email is already in use. Please use a different email.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occurred : " + ex.Message);
+                }
+                finally
+                {
+                    await sql.CloseAsync();
+
+                }
+            }
+        }
+        // This method is not in use currently, might be useful later.
+        public static async Task<int> SetId(string username)
+        {
+            using (var sql = CONNECTIONHELPER())
+            {
+                string sqlQuery = "select top 1 * from users order by id desc;";
+                try
+                {
+
+                    var userList = (await sql.QueryAsync<users>(sqlQuery)).ToList();
+                    foreach (var user in userList)
+                    {
+                        if (user.username == username)
+                        {
+                            users.Instance.id = user.id++;
+                            return users.Instance.id;
+                        }
+                    }
+                    sql.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occurred : " + ex.Message);
+                }
+                finally
+                {
+                    await sql.CloseAsync();
+                }
+
+                return 0;
+            }
+        }
+        // Method to verify the password for the current user
+        public static async Task VerifyPasswordForCurrentUserAsync(string password, string username)
+        {
+            using (var sql = CONNECTIONHELPER())
+            {
+                string sqlQuery = "SELECT * FROM users WHERE username = @Username;";
+                try
+                {
+
+                    var userList = (await sql.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
+                    foreach (var user in userList)
+                    {
+                        if (user.username == username)
+                        {
+                            bool isPasswordValid = PasswordHasher.VerifyPassword(password, user.PasswordHash, Convert.FromHexString(user.salt));
+                            if (isPasswordValid)
+                            {
+                                Console.WriteLine(" Password is valid. User authenticated.");
+                                passwordExists = true;
+                            }
+                            else
+                            {
+                                Console.WriteLine(" Invalid password. Authentication failed.");
+                                passwordExists = false;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occurred : " + ex.Message);
+                }
+                
+            }
+        }
+        public static async Task GetAdminStatus(string username)
+        {
+            using (var sql = CONNECTIONHELPER())
+            {
+                await GetUserId(username);
+                string sqlQuery = "select isAdmin from users where id = @Id;";
+
+                try
+                {
+                    var Response = await sql.QueryFirstOrDefaultAsync<users>(sqlQuery, new { Id = users.Instance.id });
+
+                    if (Response.isAdmin == 1)
+                    {
+                        AdminPanel.LoadAdminPanel();
+                    }
 
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(" An error occurred while creating the user: " + ex.Message);
+                    Console.WriteLine(" An error occured getting admin status : " + ex.Message);
                 }
             }
-
-        }
-        // Method to verify if an email is already in use
-        public static async Task VerifyEmail(string email, SqlConnection sql)
-        {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "SELECT COUNT(1) FROM users WHERE email = @Email;";
-            try
-            {
-                int rowsaffected = await sql.ExecuteScalarAsync<int>(sqlQuery, new { Email = email });
-                if (rowsaffected <= 0)
-                {
-                    emailExists = false;
-                }
-                else
-                {
-                    emailExists = true;
-                    Console.WriteLine(" Email is already in use. Please use a different email.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occurred : " + ex.Message);
-            }
-            finally
-            {
-                await sql.CloseAsync();
-
-            }
-        }
-        // This method is not in use currently, might be useful later.
-        public static async Task<int> SetId(string username, SqlConnection sql)
-        {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "select top 1 * from users order by id desc;";
-            try
-            {
-                await sql.OpenAsync();
-                var userList = (await sql.QueryAsync<users>(sqlQuery)).ToList();
-                foreach (var user in userList)
-                {
-                    if (user.username == username)
-                    {
-                        users.Instance.id = user.id++;
-                        return users.Instance.id;
-                    }
-                }
-                sql.Close();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occurred : " + ex.Message);
-            }
-            finally
-            {
-                await sql.CloseAsync();
-            }
-
-            return 0;
-        }
-        // Method to verify the password for the current user
-        public static async Task VerifyPasswordForCurrentUserAsync(string password, string username, SqlConnection sql)
-        {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            string sqlQuery = "SELECT * FROM users WHERE username = @Username;";
-            try
-            {
-                await sql.OpenAsync();
-                var userList = (await sql.QueryAsync<users>(sqlQuery, new { Username = username })).ToList();
-                foreach (var user in userList)
-                {
-                    if (user.username == username)
-                    {
-                        bool isPasswordValid = PasswordHasher.VerifyPassword(password, user.PasswordHash, Convert.FromHexString(user.salt));
-                        if (isPasswordValid)
-                        {
-                            Console.WriteLine(" Password is valid. User authenticated.");
-                            passwordExists = true;
-                        }
-                        else
-                        {
-                            Console.WriteLine(" Invalid password. Authentication failed.");
-                            passwordExists = false;
-                        }
-                    }
-                }
-                sql.Close();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occurred : " + ex.Message);
-            }
-           await sql.CloseAsync();
-        }
-        public static async Task GetAdminStatus(SqlConnection sql, string username)
-        {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            await GetUserId(username, sql);
-            if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
-            string sqlQuery = "select isAdmin from users where id = @Id;";
-
-            try
-            {
-                var Response = await sql.QueryFirstOrDefaultAsync<users>(sqlQuery, new { Id = users.Instance.id });
-
-                if(Response.isAdmin == 1)
-                {
-                    AdminPanel.LoadAdminPanel();
-                }
-                
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occured getting admin status : " + ex.Message);
-            }
-      
         
         }
         // Method to fetch and display the user's IP location
@@ -605,13 +581,14 @@ namespace Tuoksu_inventory.classes
         }
         // I plan on taking time of the day into account on this method, maybe even today, i have a vision already on how to implement it.
         // I also realize this right now basiclly the same as fragranceForWeather() but as ive stated i plan on making more features as i go along.
-        public static async Task ScentOfTheDay(SqlConnection sql, string username, double temperature)
+        public static async Task ScentOfTheDay( string username, double temperature)
         {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            await GetUserId(username, sql);
-            Console.Clear();
-            
-            string ArtXD = @"
+            using (var sql = CONNECTIONHELPER())
+            {
+                await GetUserId(username);
+                Console.Clear();
+
+                string ArtXD = @"
                              _
                             (_)
                            |---|
@@ -619,84 +596,85 @@ namespace Tuoksu_inventory.classes
                            |   |
                            '---'";
 
-            Console.WriteLine($"Scent of the day, (TEMP : {temperature} ) \n {ArtXD} \n");
-            
+                Console.WriteLine($"Scent of the day, (TEMP : {temperature} ) \n {ArtXD} \n");
 
-            string sqlQuery = "Select top 1 * from tuoksut where userId = @Id ";
 
-            if (temperature >= 10 && temperature <= 20)
-            {
-                sqlQuery = "select top 1 * from tuoksut where userId = @Id and ( category = 'floral' or category = 'fresh' or weather = 'mild' or weather = 'mild sunny') order by NEWID();";
-                try
+                string sqlQuery = "Select top 1 * from tuoksut where userId = @Id ";
+
+                if (temperature >= 10 && temperature <= 20)
                 {
-                    if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
-                    
-                    // Using QueryFirstOrDefaultAsync() is better because i only get 1 fragrance from the db, but as you might have noticed i didnt use it on the method below, thats because i
-                    // the method was litlle different when i wrote it. So imma just keep it that way because it works ~_~.
-                    var row = await sql.QueryFirstOrDefaultAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
-                    if (row != null)
+                    sqlQuery = "select top 1 * from tuoksut where userId = @Id and ( category = 'floral' or category = 'fresh' or weather = 'mild' or weather = 'mild sunny') order by NEWID();";
+                    try
                     {
-                        Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
-                    }
-                    else
-                    {
-                        Console.WriteLine(" No Suitable fragrance in your collection");
-                    }
+                        if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
+
+                        // Using QueryFirstOrDefaultAsync() is better because i only get 1 fragrance from the db, but as you might have noticed i didnt use it on the method below, thats because i
+                        // the method was litlle different when i wrote it. So imma just keep it that way because it works ~_~.
+                        var row = await sql.QueryFirstOrDefaultAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                        if (row != null)
+                        {
+                            Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
+                        }
+                        else
+                        {
+                            Console.WriteLine(" No Suitable fragrance in your collection");
+                        }
 
 
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($" An error occured on scentoftheday : " + ex.Message);
+                    }
                 }
-                catch (Exception ex)
+                else if (temperature > 20)
                 {
-                    Console.WriteLine($" An error occured on scentoftheday : " + ex.Message);
+                    sqlQuery = "select top 1 * from tuoksut where userId = @Id and ( category = 'fresh' or category = 'airy' or weather = 'warm' or weather = 'warm sunny') order by NEWID();";
+                    try
+                    {
+                        if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
+
+                        var row = await sql.QueryFirstOrDefaultAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                        if (row != null)
+                        {
+                            Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
+                        }
+                        else
+                        {
+                            Console.WriteLine(" No Suitable fragrance in your collection");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(" An error occured on scentoftheday : " + ex.Message);
+                    }
                 }
+                else
+                {
+                    sqlQuery = "select top 1 * from tuoksut where userId = @Id and ( category = 'gourmand' or category = 'amber' or weather = 'cold' or weather = 'cold sunny') order by NEWID();";
+
+                    try
+                    {
+                        if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
+
+                        var row = await sql.QueryFirstOrDefaultAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                        if (row != null)
+                        {
+                            Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
+                        }
+                        else
+                        {
+                            Console.WriteLine(" No Suitable fragrance in your collection");
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(" An error occured on scentoftheday : " + ex.Message);
+                    }
+                }
+                
             }
-            else if (temperature > 20)
-            {
-                sqlQuery = "select top 1 * from tuoksut where userId = @Id and ( category = 'fresh' or category = 'airy' or weather = 'warm' or weather = 'warm sunny') order by NEWID();";
-                try
-                {
-                    if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
-
-                    var row = await sql.QueryFirstOrDefaultAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
-                    if (row != null)
-                    {
-                        Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
-                    }
-                    else
-                    {
-                        Console.WriteLine(" No Suitable fragrance in your collection");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(" An error occured on scentoftheday : " + ex.Message);
-                }
-            }
-            else
-            {
-                sqlQuery = "select top 1 * from tuoksut where userId = @Id and ( category = 'gourmand' or category = 'amber' or weather = 'cold' or weather = 'cold sunny') order by NEWID();";
-
-                try
-                {
-                    if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
-
-                    var row = await sql.QueryFirstOrDefaultAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
-                    if (row != null)
-                    {
-                        Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
-                    }
-                    else
-                    {
-                        Console.WriteLine(" No Suitable fragrance in your collection");
-                    }
-
-                }
-                catch(Exception ex)
-                {
-                    Console.WriteLine(" An error occured on scentoftheday : " + ex.Message);
-                }
-            }
-            await sql.CloseAsync();
         }
         public static async Task SuggestBasedOnFeeling(string username)
         {
@@ -749,101 +727,107 @@ namespace Tuoksu_inventory.classes
             }
         }
         // Method to suggest fragrances based on the weather. Ps : I want to add logic that takes the occasion into account as well.
-        public static async Task FragranceForWeather(SqlConnection sql,double temperature)
+        public static async Task FragranceForWeather(double temperature)
         {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            await GetUserId(users.Instance.username, sql);
-            // I plan on making this more sophisticated, but for now this will do. I will add a method that takes one random fragrance from each category later.
-            // Just learned about the NEWID() so now i think this method is ready, if i figure out a way to make this better i will do it!
-            var sqlQuery = "select top 1 * from tuoksut where userId = @Id and (category = 'gourmand' OR category = 'amber' or weather = 'cold' or weather = 'cold sunny' ) order by NEWID();";
-
-            try
+            using (var sql = CONNECTIONHELPER())
             {
-                await UserLocation();
-                if (temperature <= 10)
-                {
-                    Console.WriteLine(" It's cold outside. You might want to wear warm and spicy fragrances. For example:\n");
-                    await sql.OpenAsync();
-                    var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
-                    foreach (var fragrance in frags)
-                    {
-                        Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
-                    }
+                await GetUserId(users.Instance.username);
+                // I plan on making this more sophisticated, but for now this will do. I will add a method that takes one random fragrance from each category later.
+                // Just learned about the NEWID() so now i think this method is ready, if i figure out a way to make this better i will do it!
+                var sqlQuery = "select top 1 * from tuoksut where userId = @Id and (category = 'gourmand' OR category = 'amber' or weather = 'cold' or weather = 'cold sunny' ) order by NEWID();";
 
-                }
-                else if (temperature > 10 && temperature <= 20)
+                try
                 {
-                    Console.WriteLine(" It's mild outside. You might want to wear fresh and floral fragrances. For example");
-                    sqlQuery = "select top 1 * from tuoksut where userId = @Id and (category = 'floral' or category = 'fresh') order by NEWID();";
-
-                    await sql.OpenAsync();
-                    var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
-                    foreach (var fragrance in frags)
+                    await UserLocation();
+                    if (temperature <= 10)
                     {
-                        Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                        Console.WriteLine(" It's cold outside. You might want to wear warm and spicy fragrances. For example:\n");
+                        await sql.OpenAsync();
+                        var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                        foreach (var fragrance in frags)
+                        {
+                            Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                        }
+
+                    }
+                    else if (temperature > 10 && temperature <= 20)
+                    {
+                        Console.WriteLine(" It's mild outside. You might want to wear fresh and floral fragrances. For example");
+                        sqlQuery = "select top 1 * from tuoksut where userId = @Id and (category = 'floral' or category = 'fresh') order by NEWID();";
+
+                        await sql.OpenAsync();
+                        var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                        foreach (var fragrance in frags)
+                        {
+                            Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                        }
+                    }
+                    else
+                    {
+                        sqlQuery = "select top 1 * from tuoksut where userId = @Id and (category = 'citrusy' or category = 'aquatic' or 'fresh') order by NEWID();";
+                        Console.WriteLine(" It's warm outside. You might want to wear light and citrusy fragrances. For Example\n");
+
+                        await sql.OpenAsync();
+                        var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                        foreach (var fragrance in frags)
+                        {
+                            Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                        }
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    sqlQuery = "select top 1 * from tuoksut where userId = @Id and (category = 'citrusy' or category = 'aquatic' or 'fresh') order by NEWID();";
-                    Console.WriteLine(" It's warm outside. You might want to wear light and citrusy fragrances. For Example\n");
-
-                    await sql.OpenAsync();
-                    var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
-                    foreach (var fragrance in frags)
-                    {
-                        Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
-                    }
+                    Console.WriteLine(" An error occurred while fetching fragrance for weather: " + ex.Message);
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occurred while fetching fragrance for weather: " + ex.Message);
             }
         }
         // Work in progress
-        public static async Task SuggestFragranceForCasual(SqlConnection sql)
+        public static async Task SuggestFragranceForCasual()
         {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            await UserLocation();
-            string sqlQuery = "select top 1 * from tuoksut where userId = @Id and (occasion = 'casual') order by NEWID();";
+            using (var sql = CONNECTIONHELPER())
+            {
+                await UserLocation();
+                string sqlQuery = "select top 1 * from tuoksut where userId = @Id and (occasion = 'casual') order by NEWID();";
 
-            await GetUserId(users.Instance.username, sql);
-            try
-            {
-                await sql.OpenAsync();
-                var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
-                foreach (var fragrance in frags)
+                await GetUserId(users.Instance.username);
+                try
                 {
-                    Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                    await sql.OpenAsync();
+                    var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                    foreach (var fragrance in frags)
+                    {
+                        Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occurred while suggesting fragrance for casual occasion: " + ex.Message);
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occurred while suggesting fragrance for casual occasion: " + ex.Message);
+                }
             }
         }
-        public static async Task SuggestFragranceForDates(SqlConnection sql)
+        public static async Task SuggestFragranceForDates()
         {
-            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            await UserLocation(); // might be useful later, At this point i started thinking more about recources so might comment this out 
-
-            string sqlQuery = "select top 1 * from tuoksut where userId = @Id and (occasion = 'dates' or occasion = 'date') order by NEWID();";
-
-            await GetUserId(users.Instance.username, sql);
-            
-            try
+            using (var sql = CONNECTIONHELPER())
             {
-                await sql.OpenAsync();
-                var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
-                foreach (var fragrance in frags)
+                await UserLocation(); // might be useful later, At this point i started thinking more about recources so might comment this out 
+
+                string sqlQuery = "select top 1 * from tuoksut where userId = @Id and (occasion = 'dates' or occasion = 'date') order by NEWID();";
+
+                await GetUserId(users.Instance.username);
+
+                try
                 {
-                    Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+
+                    var frags = await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                    foreach (var fragrance in frags)
+                    {
+                        Console.WriteLine($" Name: {fragrance.Name}, Brand: {fragrance.Brand}, Notes: {fragrance.notes},");
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(" An error occurred while suggesting fragrance for dates: " + ex.Message);
+                catch (Exception ex)
+                {
+                    Console.WriteLine(" An error occurred while suggesting fragrance for dates: " + ex.Message);
+                }
             }
         }
         public static string Feeling()

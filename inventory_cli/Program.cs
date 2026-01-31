@@ -34,7 +34,7 @@ class Program
             using (var connection = fragrance.CONNECTIONHELPER())
             {
                 
-                await fragrance.CheckIfUserExists(username, connection);
+                await fragrance.CheckIfUserExists(username);
                 if (!fragrance.userExists)
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -65,9 +65,9 @@ class Program
                     Console.WriteLine(" User found. Please enter your password to continue.");
                     
 
-                    await fragrance.VerifyPasswordForCurrentUserAsync(ReadPassword(), username, connection);
+                    await fragrance.VerifyPasswordForCurrentUserAsync(ReadPassword(), username);
                     // The code doesnt work if i await the getadminstatus, I dont know why tho.
-                    fragrance.GetAdminStatus(connection, username);
+                    await fragrance.GetAdminStatus(username);
                     //if (users.Instance.isAdmin == 1) AdminPanel.LoadAdminPanel();
 
                     Console.ForegroundColor = ConsoleColor.Green;
@@ -84,8 +84,8 @@ class Program
                             case "add":
                                 try
                                 {
-                                    if (connection.State == System.Data.ConnectionState.Open) await connection.CloseAsync();
-                                    await fragrance.AddFragrancesAsync(connection);
+                                    
+                                    await fragrance.AddFragrancesAsync();
                                 }
                                 catch (Exception ex)
                                 {
@@ -98,8 +98,8 @@ class Program
                             case "list":
                                 try
                                 {
-                                    if (connection.State == System.Data.ConnectionState.Open) await connection.CloseAsync();
-                                    await fragrance.ListFragrancesForCurrentUser(connection, username);
+                                    
+                                    await fragrance.ListFragrancesForCurrentUser(username);
                                 }
                                 catch (Exception ex)
                                 {
@@ -112,8 +112,8 @@ class Program
                             case "remove":
                                 try
                                 {
-                                    if (connection.State == System.Data.ConnectionState.Open) await connection.CloseAsync();
-                                    await fragrance.RemoveFragranceAsync(connection, users.Instance.id, username);
+                                    
+                                    await fragrance.RemoveFragranceAsync( users.Instance.id, username);
                                 }
                                 catch (Exception ex)
                                 {
@@ -125,8 +125,8 @@ class Program
                             case "sotd":
                                 try
                                 {
-                                    if (connection.State == System.Data.ConnectionState.Open) await connection.CloseAsync();
-                                    await fragrance.ScentOfTheDay(connection, username, await fragrance.UserLocation());
+                                   
+                                    await fragrance.ScentOfTheDay( username, await fragrance.UserLocation());
                                 }
                                 catch(Exception ex)
                                 {
@@ -141,7 +141,7 @@ class Program
                             case "suggest":
                                 try
                                 {
-                                    await fragrance.FragranceForWeather(connection, users.Instance.id);
+                                    await fragrance.FragranceForWeather(users.Instance.id);
                                 }
                                 catch (Exception ex)
                                 {
@@ -193,7 +193,7 @@ class Program
                     Console.ResetColor();
                     return;
                 }
-                 fragrance.CheckIfUserExists(username, connection).Wait();
+                await fragrance.CheckIfUserExists(username);
 
 
                 if (fragrance.userExists)
@@ -215,8 +215,8 @@ class Program
                     Console.ResetColor();
                     return;
                 }
-                
-               fragrance.VerifyEmail(email, connection).Wait();
+
+                await fragrance.VerifyEmail(email);
                 
                 if (fragrance.emailExists)
                 {
