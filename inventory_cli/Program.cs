@@ -125,7 +125,6 @@ class Program
                             case "sotd":
                                 try
                                 {
-                                   
                                     await fragrance.ScentOfTheDay( username, await fragrance.UserLocation());
                                 }
                                 catch(Exception ex)

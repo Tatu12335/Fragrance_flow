@@ -24,6 +24,8 @@ namespace Tuoksu_inventory.classes
      
      I plan on splitting this project to multiple files once i start to lose my mind 
        
+    I started changing my singleton architecture to depencency injection architecture.
+
      */
     public class fragrance
     {
@@ -46,7 +48,7 @@ namespace Tuoksu_inventory.classes
 
         public static async Task TestConnection()
         {
-
+            var service = AddTras
         }
         // Doesnt really work as intended yet. Well now it does :)
         public static async Task<List<fragrance>> GetAllFragrances()
