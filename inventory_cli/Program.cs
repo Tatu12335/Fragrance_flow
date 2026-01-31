@@ -71,7 +71,6 @@ class Program
                     if(users.Instance.isAdmin == 1)
                     {
                         Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine("------ WELCOME ADMIN ------");
                         Console.ResetColor();
                         
                         AdminPanel.LoadAdminPanel();
@@ -84,7 +83,7 @@ class Program
                         Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine($"------ WELCOME BACK [{username}] ------");
                         ShowPrompt();
-                        var command = Console.ReadLine().ToLower();
+                        var command = Console.ReadLine()?.Trim().ToLower();
                         switch (command)
                         {
                             case "add":
@@ -150,6 +149,16 @@ class Program
                                     Console.ForegroundColor = ConsoleColor.Red;
                                     Console.WriteLine($" Error suggesting fragrance: {ex.Message}");
                                     Console.ResetColor();
+                                }
+                                break;
+                            case "suggest -f":
+                                try
+                                {
+
+                                }
+                                catch(Exception ex)
+                                {
+                                    Console.WriteLine(" An error occured on command \"suggest -f\"");
                                 }
                                 break;
                             default:
@@ -267,6 +276,7 @@ class Program
             Console.WriteLine(" list - List all fragrances");
             Console.WriteLine(" remove - Remove a fragrance by ID");
             Console.WriteLine(" suggest - Get fragrance suggestions based on the weather\n( NOTE : The program gets your location automatically if you use an vpn it wont work correctly)\n");
+            Console.WriteLine(" TIP : Use \"suggest -f\", To get suggestion based feelings");
             Console.WriteLine(" sotd - Scent of the day");
             Console.WriteLine(" help - Show this prompt");
             Console.WriteLine("");

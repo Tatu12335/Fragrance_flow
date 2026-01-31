@@ -601,11 +601,19 @@ namespace Tuoksu_inventory.classes
                 {
                     if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
                     
-                    var rowsEffected = (await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id })).ToList();
-                    foreach( var row in rowsEffected )
+                    // Using QueryFirstOrDefaultAsync() is better because i only get 1 fragrance from the db, but as you might have noticed i didnt use it on the method below, thats because i
+                    // the method was litlle different when i wrote it. So imma just keep it that way because it works ~_~.
+                    var row = await sql.QueryFirstOrDefaultAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                    if (row != null)
                     {
                         Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
                     }
+                    else
+                    {
+                        Console.WriteLine(" No Suitable fragrance in your collection");
+                    }
+
+
                 }
                 catch (Exception ex)
                 {
@@ -619,10 +627,14 @@ namespace Tuoksu_inventory.classes
                 {
                     if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
 
-                    var rowsAffected = (await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id })).ToList();
-                    foreach (var row in rowsAffected)
+                    var row = await sql.QueryFirstOrDefaultAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                    if (row != null)
                     {
                         Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
+                    }
+                    else
+                    {
+                        Console.WriteLine(" No Suitable fragrance in your collection");
                     }
                 }
                 catch (Exception ex)
@@ -638,12 +650,16 @@ namespace Tuoksu_inventory.classes
                 {
                     if (sql.State != System.Data.ConnectionState.Open) await sql.OpenAsync();
 
-                    var rowsEffected = (await sql.QueryAsync<fragrance>(sqlQuery, new { Id = users.Instance.id })).ToList();
-                    foreach (var row in rowsEffected)
+                    var row = await sql.QueryFirstOrDefaultAsync<fragrance>(sqlQuery, new { Id = users.Instance.id });
+                    if (row != null)
                     {
                         Console.WriteLine($" Name : {row.Name}, Brand : {row.Brand}, Notes {row.notes}");
                     }
-                    
+                    else
+                    {
+                        Console.WriteLine(" No Suitable fragrance in your collection");
+                    }
+
                 }
                 catch(Exception ex)
                 {
@@ -651,7 +667,14 @@ namespace Tuoksu_inventory.classes
                 }
             }
         }
+        public static async Task SuggestBasedOnFeeling(SqlConnection sql,string input)
+        {
+            sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            Feeling();
             
+
+            
+        }
         // Method to suggest fragrances based on the weather. Ps : I want to add logic that takes the occasion into account as well.
         public static async Task FragranceForWeather(SqlConnection sql,double temperature)
         {
@@ -750,7 +773,18 @@ namespace Tuoksu_inventory.classes
                 Console.WriteLine(" An error occurred while suggesting fragrance for dates: " + ex.Message);
             }
         }
-       
+        public static void Feeling()
+        {
+            Console.ResetColor();
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine(" What are you feeling today? (1-6)");
+            Console.WriteLine(" 1. Calm ");
+            Console.WriteLine(" 2. Energetic");
+            Console.WriteLine(" 3. Powerful");
+            Console.Write(" >");
+
+        }
         // Additional classes can be added here as needed
         public class IpLocation
         {
