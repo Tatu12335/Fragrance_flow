@@ -39,6 +39,5 @@ Dynamic suggestion logic.
 📍 Futere Plans
  • I plan to continue this project with new features and refactoring.
 
-
- • At 14 hours this code works but, it's messy and there alot of nested if-else statements.
+ ➖ As you might see this is yet to be a fullstack application i plan on implementing either wpf or web based gui later on.
 
