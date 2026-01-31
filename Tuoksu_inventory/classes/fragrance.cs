@@ -574,12 +574,22 @@ namespace Tuoksu_inventory.classes
             return 0;
         }
         // I plan on taking time of the day into account on this method, maybe even today, i have a vision already on how to implement it.
+        // I also realize this right now basiclly the same as fragranceForWeather() but as ive stated i plan on making more features as i go along.
         public static async Task ScentOfTheDay(SqlConnection sql, string username, double temperature)
         {
             sql.ConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
             await GetUserId(username, sql);
             Console.Clear();
-            Console.WriteLine($"Scent of the day!! (TEMP : {temperature}) : ");
+            
+            string ArtXD = @"
+                             _
+                            (_)
+                           |---|
+                           |   |
+                           |   |
+                           '---'";
+
+            Console.WriteLine($"Scent of the day, (TEMP : {temperature} ) \n {ArtXD} \n");
             
 
             string sqlQuery = "Select top 1 * from tuoksut where userId = @Id ";
