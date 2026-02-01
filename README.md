@@ -39,5 +39,6 @@ Dynamic suggestion logic.
 📍 Futere Plans
  • I plan to continue this project with new features and refactoring.
 
- ➖ As you might see this is yet to be a fullstack application i plan on implementing either wpf or web based gui later on.
+ • As you might see this is yet to be a fullstack application i plan on implementing either wpf or web based gui later on.
 
+ • Start from fresh and do more oop and DI.
