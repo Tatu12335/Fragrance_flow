@@ -42,3 +42,6 @@ Dynamic suggestion logic.
  • As you might see this is yet to be a fullstack application i plan on implementing either wpf or web based gui later on.
 
  • Start from fresh and do more oop and DI.
+
+🛒 Where am i now
+ • Right now im implementing the above named methods(oop and DI) On a private repo, i have been learning a lot about dependency injection, im starting to get the hang of it.
