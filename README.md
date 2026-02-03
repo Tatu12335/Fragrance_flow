@@ -7,9 +7,9 @@ Fragrance Flow is a specialized inventory management system designed for fragran
 
 • Inventory Management: Full CRUD (Create, Read, Update, Delete) functionality for managing a fragrance collection.
 
-• Smart Suggestions: A unique feature that suggests fragrances based on the user's local weather(!Work in progress).
+• Smart Suggestions: A unique feature that suggests fragrances based on the user's local weather.
 
-• Tech Stack: Uses ip-api.com for geolocation and a weather API to determine the best scent for the current conditions (!Work in progress).
+• Tech Stack: Uses ip-api.com for geolocation and a weather API to determine the best scent for the current conditions.
 
 • Security First: Implementation of secure coding practices to protect user data and credentials.
 
@@ -39,5 +39,11 @@ Dynamic suggestion logic.
 📍 Futere Plans
  • I plan to continue this project with new features and refactoring.
 
- ➖ As you might see this is yet to be a fullstack application i plan on implementing either wpf or web based gui later on.
+ • As you might see this is yet to be a fullstack application i plan on implementing either wpf or web based gui later on.
 
+ • Start from fresh and do more oop and DI.
+
+ • Implement ai features.
+
+🛒 Where am i now
+ • Right now im implementing the above named methods(oop and DI) On a private repo, i have been learning a lot about dependency injection, im starting to get the hang of it.
