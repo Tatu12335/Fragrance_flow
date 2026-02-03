@@ -23,6 +23,7 @@ namespace Tuoksu_inventory.classes
      started adding using statements instead of manually closing the connection and now every method gets their own sql connection
      
      I plan on splitting this project to multiple files once i start to lose my mind 
+     Update lost it and now making a new architecture based on di, its a work in progress but its public.
        
     I started changing my singleton architecture to depencency injection architecture.
 
@@ -48,7 +49,7 @@ namespace Tuoksu_inventory.classes
 
         public static async Task TestConnection()
         {
-            var service = AddTras
+            
         }
         // Doesnt really work as intended yet. Well now it does :)
         public static async Task<List<fragrance>> GetAllFragrances()
@@ -224,7 +225,7 @@ namespace Tuoksu_inventory.classes
         }
         public static async Task UpdateFragrance()
         {
-            Console.WriteLine(" Updating a fragrance by ID...");
+            Console.WriteLine(" Updating a fragrance by ID..."); 
             await TestConnection();
         }
         // remove fragrance by id, only if it belongs to the current user
