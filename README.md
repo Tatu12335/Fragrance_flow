@@ -9,7 +9,7 @@ Fragrance Flow is a specialized inventory management system designed for fragran
 
 • Smart Suggestions: A unique feature that suggests fragrances based on the user's local weather.
 
-• Tech Stack: Uses ip-api.com for geolocation and a weather API to determine the best scent for the current conditions.
+• Tech Stack: Uses ip-api.com for geolocation and a openmateo API to determine the best scent for the current conditions.
 
 • Security First: Implementation of secure coding practices to protect user data and credentials.
 
@@ -41,9 +41,9 @@ Dynamic suggestion logic.
 
  • As you might see this is yet to be a fullstack application i plan on implementing either wpf or web based gui later on.
 
- • Start from fresh and do more oop and DI.
+ • Start from fresh and do oop and DI.
 
  • Implement ai features.
 
 🛒 Where am i now
- • Right now im implementing the above named methods(oop and DI) On a private repo, i have been learning a lot about dependency injection, im starting to get the hang of it.
+ • Right now im implementing the above named features to a new architecture, based on Object Oriented Programming and, dependency injection's. I have been learning a lot about dependency injection, im starting to get the hang of it.
